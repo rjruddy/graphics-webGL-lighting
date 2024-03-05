@@ -112,21 +112,26 @@ function VBObox0() {
 
   //call grid and axis creators here
   //remember to use glLineWidth for the axes to be larger
+  makeGroundGrid(); // generates gndVerts array -- x, y, z, w; r, g, b
+  makeAxes(); // generates myAxes array -- x, y, z, w; r, g, b
 
-	this.vboContents = //---------------------------------------------------------
-	new Float32Array ([						// Array of vertex attribute values we will
-  															// transfer to GPU's vertex buffer object (VBO)
-	// 1st triangle:
-  	 0.0,	 0.5,	0.0, 1.0,		1.0, 0.0, 0.0, //1 vertex:pos x,y,z,w; color: r,g,b
-    -0.5, -0.5, 0.0, 1.0,		0.0, 1.0, 0.0,
-     0.5, -0.5, 0.0, 1.0,		0.0, 0.0, 1.0,
- // 2nd triangle:
-		 0.0,  0.0, 0.0, 1.0,   1.0, 1.0, 1.0,		// (white)
-		 0.3,  0.0, 0.0, 1.0,   0.0, 0.0, 1.0,		// (blue)
-		 0.0,  0.3, 0.0, 1.0,   0.5, 0.5, 0.5,		// (gray)
-		 ]);
+  var numFloats = gndVerts.length + myAxes.length;
+  var numVerts = numFloats / 7;
+  var allVerts = new Float32Array(numFloats);
 
-	this.vboVerts = 6;						// # of vertices held in 'vboContents' array
+  //TODO: Merge gndVerts and myAxes into a larger allVerts array
+  // starting point of ground plane = 0
+  for(i=0, j=0; j< gndVerts.length; i++, j++) {
+    allVerts[i] = gndVerts[j];
+  }
+  // starting point of axes = i
+  axesStart = i;						
+  for(j=0; j< myAxes.length; i++, j++) {
+    allVerts[i] = myAxes[j];
+  }
+
+	this.vboContents = allVerts;
+	this.vboVerts = numVerts;						// # of vertices held in 'vboContents' array
 	this.FSIZE = this.vboContents.BYTES_PER_ELEMENT;
 	                              // bytes req'd by 1 vboContents array element;
 																// (why? used to compute stride and offset 
@@ -141,7 +146,7 @@ function VBObox0() {
 	                              // move forward by 'vboStride' bytes to arrive 
 	                              // at the same attrib for the next vertex. 
 
-	            //----------------------Attribute sizes
+  //----------------------Attribute sizes----------------------------------
   this.vboFcount_a_Pos0 =  4;    // # of floats in the VBO needed to store the
                                 // attribute named a_Pos0. (4: x,y,z,w values)
   this.vboFcount_a_Colr0 = 3;   // # of floats for this attrib (r,g,b values) 
@@ -150,14 +155,15 @@ function VBObox0() {
                   this.FSIZE == this.vboStride, // for agreeement with'stride'
                   "Uh oh! VBObox0.vboStride disagrees with attribute-size values!");
 
-              //----------------------Attribute offsets  
+  //----------------------Attribute offsets-------------------------------
 	this.vboOffset_a_Pos0 = 0;    // # of bytes from START of vbo to the START
 	                              // of 1st a_Pos0 attrib value in vboContents[]
   this.vboOffset_a_Colr0 = this.vboFcount_a_Pos0 * this.FSIZE;    
                                 // (4 floats * bytes/float) 
                                 // # of bytes from START of vbo to the START
                                 // of 1st a_Colr0 attrib value in vboContents[]
-	            //-----------------------GPU memory locations:
+
+  //-----------------------GPU memory locations----------------------------
 	this.vboLoc;									// GPU Location for Vertex Buffer Object, 
 	                              // returned by gl.createBuffer() function call
 	this.shaderLoc;								// GPU Location for compiled Shader-program  
@@ -166,7 +172,7 @@ function VBObox0() {
 	this.a_PosLoc;								// GPU location for 'a_Pos0' attribute
 	this.a_ColrLoc;								// GPU location for 'a_Colr0' attribute
 
-	            //---------------------- Uniform locations &values in our shaders
+  //-------------- Uniform locations &values in our shaders----------------
 	this.ModelMat = new Matrix4();	// Transforms CVV axes to model axes.
 	this.u_ModelMatLoc;							// GPU location for u_ModelMat uniform
 }
