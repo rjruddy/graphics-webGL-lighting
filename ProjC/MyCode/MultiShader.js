@@ -168,6 +168,8 @@ function main() {
                         // including ground-plane,                       
   part1Box.init(gl);		//  "		"		"  for 1st kind of shading & lighting (Gouraud)
 	part2Box.init(gl);    //  "   "   "  for 2nd kind of shading & lighting (Phong)
+
+  window.addEventListener("keydown", myKeyDown, false);
 	
   gl.clearColor(0.2, 0.2, 0.2, 1);	  // RGBA color for clearing <canvas>
   
