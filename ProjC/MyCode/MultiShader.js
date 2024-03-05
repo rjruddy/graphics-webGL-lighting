@@ -307,3 +307,99 @@ function VBO2toggle() {
   else g_show2 = 0;									// hide.
   console.log('g_show2: '+g_show2);
 }
+
+
+// Keypress event handler for Camera Movement
+// Written originally by Prof. Jack Tumblin, heavily modified by Rachel Ruddy to implement movement logic
+function myKeyDown(kev) {
+  //===============================================================================
+    console.log(  "--kev.code:",    kev.code,   "\t\t--kev.key:",     kev.key,
+                "\n--kev.ctrlKey:", kev.ctrlKey,  "\t--kev.shiftKey:",kev.shiftKey,
+                "\n--kev.altKey:",  kev.altKey,   "\t--kev.metaKey:", kev.metaKey);
+  
+    switch(kev.code) {
+      case "KeyP":
+        console.log("Pause/unPause!\n");                // print on console,
+        document.getElementById('KeyDownResult').innerHTML =
+        'myKeyDown() found p/P key. Pause/unPause!';   // print on webpage
+        if(g_isRun==true) {
+          g_isRun = false;    // STOP animation
+          }
+        else {
+          g_isRun = true;     // RESTART animation
+          tick();
+          }
+        break;
+      //------------------WASD navigation-----------------
+      case "KeyS": //down -- look down (decrease tilt)
+        tilt -= tiltRate;
+        break;
+      case "KeyW": //up -- look up (increase tilt)
+        tilt += tiltRate;
+        break;
+      case "KeyA": //left -- look left
+        theta += thetaRate;
+        break;
+      case "KeyD": //right -- look right
+        theta -= thetaRate;
+        break;
+      //----------------Arrow keys------------------------
+  
+      case "ArrowUp": //up -- move forward
+        //eye point PLUS vector from eye to aim.
+        //vector from eye to aim:
+        eye_x += (aim_x - eye_x)*velocity;
+        eye_y += (aim_y - eye_y)*velocity;
+        eye_z += (aim_z - eye_z)*velocity;
+        console.log("eye: ", eye_x, eye_y, eye_z, " aim: ", aim_x, aim_y, aim_z);
+        break;
+      case "ArrowDown": //down -- move backward
+        eye_x -= (aim_x - eye_x)*velocity;
+        eye_y -= (aim_y - eye_y)*velocity;
+        eye_z -= (aim_z - eye_z)*velocity;
+        break;
+      case "ArrowLeft": //left -- strafe left
+        // shift eyepoint vector sideways? how? shift by theta +/- 90º?
+        //cross product of direction vector with up vector!
+        aim_x = eye_x + Math.cos(theta);
+        aim_y = eye_y + Math.sin(theta);
+        aim_z = eye_z + tilt;
+        var dirVecX = aim_x-eye_x;
+        var dirVecY = aim_y-eye_y;
+        var dirVecZ = aim_z-eye_z; //v2: 0, 0, 1
+        var strafeVecX = dirVecY*1 - dirVecZ*0;
+        var strafeVecY = (dirVecZ*0 - dirVecX*1);
+        var strafeVecZ = dirVecX*0 - dirVecY*0;
+        eye_x -= strafeVecX*velocity;
+        eye_y -= strafeVecY*velocity;
+        eye_z -= strafeVecZ*velocity;
+        break;
+      case "ArrowRight": //right -- strafe right
+        // shift eyepoint vector sideways? how?
+        // eye_x += velocity*Math.sin(theta-90);
+        aim_x = eye_x + Math.cos(theta);
+        aim_y = eye_y + Math.sin(theta);
+        aim_z = eye_z + tilt;
+        var dirVecX = (eye_x + Math.cos(theta))-eye_x;
+        var dirVecY = (eye_y + Math.sin(theta))-eye_y;
+        var dirVecZ = (eye_z + tilt)-eye_z; //up vec -- 0, 0, 1
+        var strafeVecX = dirVecY*1 - dirVecZ*0;
+        var strafeVecY = (dirVecZ*0 - dirVecX*1);
+        var strafeVecZ = dirVecX*0 - dirVecY*0;
+        eye_x += strafeVecX*velocity;
+        eye_y += strafeVecY*velocity;
+        eye_z += strafeVecZ*velocity;
+        break;
+      default:
+        console.log("UNUSED!");
+        break;
+    }
+  }
+  
+  function crossVec(v1, v2) {
+    var retvec = new Vector3();
+    retvec[0] = v1[1]*v2[2] - v1[2]*v2[1];
+    retvec[1] = -(v1[2]*v2[0] - v1[0]*v2[2]);
+    retvec[2] = v1[0]*v2[1] - v1[1]*v2[0];
+    return retvec;
+  }
