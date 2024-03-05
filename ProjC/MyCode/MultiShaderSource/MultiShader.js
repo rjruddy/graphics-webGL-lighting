@@ -79,8 +79,8 @@ var g_canvasID;									// HTML-5 'canvas' element ID#
 
 // For multiple VBOs & Shaders:-----------------
 worldBox = new VBObox0();		  // Holds VBO & shaders for 3D 'world' ground-plane grid, etc;
-part1Box = new VBObox1();		  // "  "  for first set of custom-shaded 3D parts
-part2Box = new VBObox2();     // "  "  for second set of custom-shaded 3D parts
+gouraudBox = new VBObox1();		  // "  "  for first set of custom-shaded 3D parts
+phongBox = new VBObox2();     // "  "  for second set of custom-shaded 3D parts
 
 // For animation:---------------------
 var g_lastMS = Date.now();			// Timestamp (in milliseconds) for our 
@@ -168,10 +168,10 @@ function main() {
   // Initialize each of our 'vboBox' objects: 
   worldBox.init(gl);		// VBO + shaders + uniforms + attribs for our 3D world,
                         // including ground-plane,                       
-  part1Box.init(gl);		//  "		"		"  for 1st kind of shading & lighting (Gouraud)
-	part2Box.init(gl);    //  "   "   "  for 2nd kind of shading & lighting (Phong)
+  gouraudBox.init(gl);		//  "		"		"  for 1st kind of shading & lighting (Gouraud)
+	phongBox.init(gl);    //  "   "   "  for 2nd kind of shading & lighting (Phong)
 
-  setCamera();
+  setCamera(); //TEMPORARY - Set a global camera used by all VBObox objects
 
   window.addEventListener("keydown", myKeyDown, false);
 	
@@ -274,14 +274,14 @@ var b4Wait = b4Draw - g_lastMS;
 		worldBox.draw();			  // draw our VBO's contents using our shaders.
   }
   if(g_show1 == 1) { // IF user didn't press HTML button to 'hide' VBO1:
-    part1Box.switchToMe();  // Set WebGL to render from this VBObox.
-  	part1Box.adjust();		  // Send new values for uniforms to the GPU, and
-  	part1Box.draw();			  // draw our VBO's contents using our shaders.
+    gouraudBox.switchToMe();  // Set WebGL to render from this VBObox.
+  	gouraudBox.adjust();		  // Send new values for uniforms to the GPU, and
+  	gouraudBox.draw();			  // draw our VBO's contents using our shaders.
 	  }
 	if(g_show2 == 1) { // IF user didn't press HTML button to 'hide' VBO2:
-	  part2Box.switchToMe();  // Set WebGL to render from this VBObox.
-  	part2Box.adjust();		  // Send new values for uniforms to the GPU, and
-  	part2Box.draw();			  // draw our VBO's contents using our shaders.
+	  phongBox.switchToMe();  // Set WebGL to render from this VBObox.
+  	phongBox.adjust();		  // Send new values for uniforms to the GPU, and
+  	phongBox.draw();			  // draw our VBO's contents using our shaders.
   	}
 /* // ?How slow is our own code?  	
 var aftrDraw = Date.now();

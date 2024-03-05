@@ -10,8 +10,6 @@
 // JT_MultiShader.js  for EECS 351-1, 
 //									Northwestern Univ. Jack Tumblin
 
-// Jack Tumblin's Project C -- step by step.
-
 /* Show how to use 3 separate VBOs with different verts, attributes & uniforms. 
 -------------------------------------------------------------------------------
 	Create a 'VBObox' object/class/prototype & library to collect, hold & use all 
@@ -111,21 +109,28 @@ var g_posNow1 =  0.0;           // current position
 var g_posRate1 = 0.5;           // position change rate, in distance/second.
 var g_posMax1 =  1.0;           // max, min allowed positions
 var g_posMin1 = -1.0;
-                                //---------------
+
+//------------For viewport controlling: -------------------------------
+var eye_x = 7;
+var eye_y = 7;
+var eye_z = 3;
+var tilt = -0.25;
+var tiltRate = 0.02;
+var theta = 179.9;
+var thetaRate = 0.02;
+var velocity = 0.05;
+
+//storing aim point just to avoid recalculation.
+var aim_x = 0;
+var aim_y = 0;
+var aim_z = tilt;
 
 // For mouse/keyboard:------------------------
 var g_show0 = 1;								// 0==Show, 1==Hide VBO0 contents on-screen.
 var g_show1 = 1;								// 	"					"			VBO1		"				"				" 
 var g_show2 = 1;                //  "         "     VBO2    "       "       "
 
-// GLOBAL CAMERA CONTROL:					// 
 g_worldMat = new Matrix4();				// Changes CVV drawing axes to 'world' axes.
-// (equivalently: transforms 'world' coord. numbers (x,y,z,w) to CVV coord. numbers)
-// WHY?
-// Lets mouse/keyboard functions set just one global matrix for 'view' and 
-// 'projection' transforms; then VBObox objects use it in their 'adjust()'
-// member functions to ensure every VBObox draws its 3D parts and assemblies
-// using the same 3D camera at the same 3D position in the same 3D world).
 
 function main() {
 //=============================================================================
@@ -155,8 +160,7 @@ function main() {
 
   gl.enable(gl.DEPTH_TEST);
 
-  /*
-//----------------SOLVE THE 'REVERSED DEPTH' PROBLEM:------------------------
+  //----------------SOLVE THE 'REVERSED DEPTH' PROBLEM:------------------------
   // IF the GPU doesn't transform our vertices by a 3D Camera Projection Matrix
   // (and it doesn't -- not until Project B) then the GPU will compute reversed 
   // depth values:  depth==0 for vertex z == -1;   (but depth = 0 means 'near') 
@@ -173,17 +177,19 @@ function main() {
                             // than the depth buffer's stored value.
                             // (gl.LESS is DEFAULT; reverse it!)
   //------------------end 'REVERSED DEPTH' fix---------------------------------
-*/
+
 
   // Initialize each of our 'vboBox' objects: 
   worldBox.init(gl);		// VBO + shaders + uniforms + attribs for our 3D world,
                         // including ground-plane,                       
-  gouraudBox.init(gl);		//  "		"		"  for 1st kind of shading & lighting
-	phongBox.init(gl);    //  "   "   "  for 2nd kind of shading & lighting
+  gouraudBox.init(gl);		//  "		"		"  for 1st kind of shading & lighting (Gouraud)
+	phongBox.init(gl);    //  "   "   "  for 2nd kind of shading & lighting (Phong)
+
+  setCamera(); //TEMPORARY - Set a global camera used by all VBObox objects
+
+  window.addEventListener("keydown", myKeyDown, false);
 	
-setCamera();				// TEMPORARY: set a global camera used by ALL VBObox objects...
-	
-  gl.clearColor(0.3, 0.3, 0.3, 1);	  // RGBA color for clearing <canvas>
+  gl.clearColor(0.2, 0.2, 0.2, 1);	  // RGBA color for clearing <canvas>
   
   // ==============ANIMATION=============
   // Quick tutorials on synchronous, real-time animation in JavaScript/HTML-5: 
@@ -322,21 +328,117 @@ function VBO2toggle() {
   console.log('g_show2: '+g_show2);
 }
 
+//temporary camera helper func
 function setCamera() {
-//============================================================================
-// PLACEHOLDER:  sets a fixed camera at a fixed position for use by
-// ALL VBObox objects.  REPLACE This with your own camera-control code.
+  //============================================================================
+  // PLACEHOLDER:  sets a fixed camera at a fixed position for use by
+  // ALL VBObox objects.  REPLACE This with your own camera-control code.
+  
+    g_worldMat.setIdentity();
+    g_worldMat.perspective(42.0,   // FOVY: top-to-bottom vertical image angle, in degrees
+                        1.0,   // Image Aspect Ratio: camera lens width/height
+                        1.0,   // camera z-near distance (always positive; frustum begins at z = -znear)
+                        200.0);  // camera z-far distance (always positive; frustum ends at z = -zfar)
+  
+    g_worldMat.lookAt( 5.0, 5.0, 3.0,	// center of projection
+                     0.0, 0.0, 0.0,	// look-at point 
+                     0.0, 0.0, 1.0);	// View UP vector.
+    // READY to draw in the 'world' coordinate system.
+  //------------END COPY
+  
+  }
 
-	g_worldMat.setIdentity();
-	g_worldMat.perspective(42.0,   // FOVY: top-to-bottom vertical image angle, in degrees
-  										1.0,   // Image Aspect Ratio: camera lens width/height
-                      1.0,   // camera z-near distance (always positive; frustum begins at z = -znear)
-                      200.0);  // camera z-far distance (always positive; frustum ends at z = -zfar)
-
-  g_worldMat.lookAt( 5.0, 5.0, 3.0,	// center of projection
-  								 0.0, 0.0, 0.0,	// look-at point 
-  								 0.0, 0.0, 1.0);	// View UP vector.
-	// READY to draw in the 'world' coordinate system.
-//------------END COPY
-
-}
+// Keypress event handler for Camera Movement
+// Written originally by Prof. Jack Tumblin, heavily modified by Rachel Ruddy to implement movement logic
+function myKeyDown(kev) {
+  //===============================================================================
+    console.log(  "--kev.code:",    kev.code,   "\t\t--kev.key:",     kev.key,
+                "\n--kev.ctrlKey:", kev.ctrlKey,  "\t--kev.shiftKey:",kev.shiftKey,
+                "\n--kev.altKey:",  kev.altKey,   "\t--kev.metaKey:", kev.metaKey);
+  
+    switch(kev.code) {
+      case "KeyP":
+        console.log("Pause/unPause!\n");                // print on console,
+        document.getElementById('KeyDownResult').innerHTML =
+        'myKeyDown() found p/P key. Pause/unPause!';   // print on webpage
+        if(g_isRun==true) {
+          g_isRun = false;    // STOP animation
+          }
+        else {
+          g_isRun = true;     // RESTART animation
+          tick();
+          }
+        break;
+      //------------------WASD navigation-----------------
+      case "KeyS": //down -- look down (decrease tilt)
+        tilt -= tiltRate;
+        break;
+      case "KeyW": //up -- look up (increase tilt)
+        tilt += tiltRate;
+        break;
+      case "KeyA": //left -- look left
+        theta += thetaRate;
+        break;
+      case "KeyD": //right -- look right
+        theta -= thetaRate;
+        break;
+      //----------------Arrow keys------------------------
+  
+      case "ArrowUp": //up -- move forward
+        //eye point PLUS vector from eye to aim.
+        //vector from eye to aim:
+        eye_x += (aim_x - eye_x)*velocity;
+        eye_y += (aim_y - eye_y)*velocity;
+        eye_z += (aim_z - eye_z)*velocity;
+        console.log("eye: ", eye_x, eye_y, eye_z, " aim: ", aim_x, aim_y, aim_z);
+        break;
+      case "ArrowDown": //down -- move backward
+        eye_x -= (aim_x - eye_x)*velocity;
+        eye_y -= (aim_y - eye_y)*velocity;
+        eye_z -= (aim_z - eye_z)*velocity;
+        break;
+      case "ArrowLeft": //left -- strafe left
+        // shift eyepoint vector sideways? how? shift by theta +/- 90º?
+        //cross product of direction vector with up vector!
+        aim_x = eye_x + Math.cos(theta);
+        aim_y = eye_y + Math.sin(theta);
+        aim_z = eye_z + tilt;
+        var dirVecX = aim_x-eye_x;
+        var dirVecY = aim_y-eye_y;
+        var dirVecZ = aim_z-eye_z; //v2: 0, 0, 1
+        var strafeVecX = dirVecY*1 - dirVecZ*0;
+        var strafeVecY = (dirVecZ*0 - dirVecX*1);
+        var strafeVecZ = dirVecX*0 - dirVecY*0;
+        eye_x -= strafeVecX*velocity;
+        eye_y -= strafeVecY*velocity;
+        eye_z -= strafeVecZ*velocity;
+        break;
+      case "ArrowRight": //right -- strafe right
+        // shift eyepoint vector sideways? how?
+        // eye_x += velocity*Math.sin(theta-90);
+        aim_x = eye_x + Math.cos(theta);
+        aim_y = eye_y + Math.sin(theta);
+        aim_z = eye_z + tilt;
+        var dirVecX = (eye_x + Math.cos(theta))-eye_x;
+        var dirVecY = (eye_y + Math.sin(theta))-eye_y;
+        var dirVecZ = (eye_z + tilt)-eye_z; //up vec -- 0, 0, 1
+        var strafeVecX = dirVecY*1 - dirVecZ*0;
+        var strafeVecY = (dirVecZ*0 - dirVecX*1);
+        var strafeVecZ = dirVecX*0 - dirVecY*0;
+        eye_x += strafeVecX*velocity;
+        eye_y += strafeVecY*velocity;
+        eye_z += strafeVecZ*velocity;
+        break;
+      default:
+        console.log("UNUSED!");
+        break;
+    }
+  }
+  
+  function crossVec(v1, v2) {
+    var retvec = new Vector3();
+    retvec[0] = v1[1]*v2[2] - v1[2]*v2[1];
+    retvec[1] = -(v1[2]*v2[0] - v1[0]*v2[2]);
+    retvec[2] = v1[0]*v2[1] - v1[1]*v2[0];
+    return retvec;
+  }

@@ -350,7 +350,7 @@ VBObox0.prototype.adjust = function() {
 	// // Adjust values for our uniforms,
   // this.ModelMat.setRotate(g_angleNow0, 0, 0, 1);	  // rotate drawing axes,
   // this.ModelMat.translate(0.35, 0, 0);							// then translate them.
-  this.ModelMat.setIdentity();
+  // this.ModelMat.setIdentity();
   this.ModelMat.set(g_worldMat);
 
   //  Transfer new uniforms' values to the GPU:-------------
@@ -1094,7 +1094,7 @@ VBObox2.prototype.adjust = function() {
   }
 
 	// Adjust values for our uniforms;-------------------------------------------
-  this.ModelMatrix.setTranslate(-0.3, 0.0, 0.0); //Shift origin leftwards,
+  this.ModelMatrix.translate(-0.3, 0.0, 0.0); //Shift origin leftwards,
   this.ModelMatrix.rotate(g_angleNow2, 0, 0, 1);	// -spin drawing axes,
 
   //  Transfer new uniforms' values to the GPU:--------------------------------

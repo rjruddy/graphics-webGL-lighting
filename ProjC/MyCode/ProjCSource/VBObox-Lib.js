@@ -71,42 +71,14 @@ As each 'VBObox' object can contain:
   -- a DIFFERENT set of attributes that define a vertex for that shader program, 
   -- a DIFFERENT number of vertices to used to fill the VBOs in GPU memory, and 
   -- a DIFFERENT set of uniforms transferred to GPU memory for shader use.  
-  THUS:
-		I don't see any easy way to use the exact same object constructors and 
-		prototypes for all VBObox objects.  Every additional VBObox objects may vary 
-		substantially, so I recommend that you copy and re-name an existing VBObox 
-		prototype object, and modify as needed, as shown here. 
-		(e.g. to make the VBObox3 object, copy the VBObox2 constructor and 
-		all its prototype functions, then modify their contents for VBObox3 
-		activities.)
-
 */
-
 // Written for EECS 351-2,	Intermediate Computer Graphics,
 //							Northwestern Univ. EECS Dept., Jack Tumblin
-// 2016.05.26 J. Tumblin-- Created; tested on 'TwoVBOs.html' starter code.
-// 2017.02.20 J. Tumblin-- updated for EECS 351-1 use for Project C.
-// 2018.04.11 J. Tumblin-- minor corrections/renaming for particle systems.
-//    --11e: global 'gl' replaced redundant 'myGL' fcn args; 
-//    --12: added 'SwitchToMe()' fcn to simplify 'init()' function and to fix 
-//      weird subtle errors that sometimes appear when we alternate 'adjust()'
-//      and 'draw()' functions of different VBObox objects. CAUSE: found that
-//      only the 'draw()' function (and not the 'adjust()' function) made a full
-//      changeover from one VBObox to another; thus calls to 'adjust()' for one
-//      VBObox could corrupt GPU contents for another.
-//      --Created vboStride, vboOffset members to centralize VBO layout in the 
-//      constructor function.
-//    -- 13 (abandoned) tried to make a 'core' or 'resuable' VBObox object to
-//      which we would add on new properties for shaders, uniforms, etc., but
-//      I decided there was too little 'common' code that wasn't customized.
-//=============================================================================
-
 
 //=============================================================================
+//==========================VBO Boxes and Methods==============================
 //=============================================================================
 function VBObox0() {
-//=============================================================================
-//=============================================================================
 // CONSTRUCTOR for one re-usable 'VBObox0' object that holds all data and fcns
 // needed to render vertices from one Vertex Buffer Object (VBO) using one 
 // separate shader program (a vertex-shader & fragment-shader pair) and one
@@ -138,27 +110,28 @@ function VBObox0() {
     gl_FragColor = vec4(v_Colr0, 1.0);
   }`;
 
-	this.vboContents = //---------------------------------------------------------
-	new Float32Array ([						// Array of vertex attribute values we will
-  															// transfer to GPU's vertex buffer object (VBO)
-	// 1st triangle:
-  	 0.0,	 0.0,	0.0, 1.0,		1.0, 1.0, 1.0, //1 vertex:pos x,y,z,w; color: r,g,b  X AXIS
-     1.0,  0.0, 0.0, 1.0,		1.0, 0.0, 0.0,
-     
-  	 0.0,	 0.0,	0.0, 1.0,		1.0, 1.0, 1.0, // Y AXIS
-     0.0,  1.0, 0.0, 1.0,		0.0, 1.0, 0.0,
-     
-  	 0.0,	 0.0,	0.0, 1.0,		1.0, 1.0, 1.0, // Z AXIS
-     0.0,  0.0, 1.0, 1.0,		0.0, 0.2, 1.0,
-     
-     // 2 long lines of the ground grid:
-  	 -100.0,   0.2,	0.0, 1.0,		1.0, 0.2, 0.0, // horiz line
-      100.0,   0.2, 0.0, 1.0,		0.0, 0.2, 1.0,
-  	  0.2,	-100.0,	0.0, 1.0,		0.0, 1.0, 0.0, // vert line
-      0.2,   100.0, 0.0, 1.0,		1.0, 0.0, 1.0,
-		 ]);
+  //call grid and axis creators here
+  //remember to use glLineWidth for the axes to be larger
+  makeGroundGrid(); // generates gndVerts array -- x, y, z, w; r, g, b
+  makeAxes(); // generates myAxes array -- x, y, z, w; r, g, b
 
-	this.vboVerts = 10;						// # of vertices held in 'vboContents' array
+  var numFloats = gndVerts.length + myAxes.length;
+  var numVerts = numFloats / 7;
+  var allVerts = new Float32Array(numFloats);
+
+  //TODO: Merge gndVerts and myAxes into a larger allVerts array
+  // starting point of ground plane = 0
+  for(i=0, j=0; j< gndVerts.length; i++, j++) {
+    allVerts[i] = gndVerts[j];
+  }
+  // starting point of axes = i
+  axesStart = i;		
+  for(j=0; j< myAxes.length; i++, j++) {
+    allVerts[i] = myAxes[j];
+  }
+
+	this.vboContents = allVerts;
+	this.vboVerts = numVerts;						// # of vertices held in 'vboContents' array
 	this.FSIZE = this.vboContents.BYTES_PER_ELEMENT;
 	                              // bytes req'd by 1 vboContents array element;
 																// (why? used to compute stride and offset 
@@ -173,7 +146,7 @@ function VBObox0() {
 	                              // move forward by 'vboStride' bytes to arrive 
 	                              // at the same attrib for the next vertex. 
 
-	            //----------------------Attribute sizes
+  //----------------------Attribute sizes----------------------------------
   this.vboFcount_a_Pos0 =  4;    // # of floats in the VBO needed to store the
                                 // attribute named a_Pos0. (4: x,y,z,w values)
   this.vboFcount_a_Colr0 = 3;   // # of floats for this attrib (r,g,b values) 
@@ -182,14 +155,15 @@ function VBObox0() {
                   this.FSIZE == this.vboStride, // for agreeement with'stride'
                   "Uh oh! VBObox0.vboStride disagrees with attribute-size values!");
 
-              //----------------------Attribute offsets  
+  //----------------------Attribute offsets-------------------------------
 	this.vboOffset_a_Pos0 = 0;    // # of bytes from START of vbo to the START
 	                              // of 1st a_Pos0 attrib value in vboContents[]
   this.vboOffset_a_Colr0 = this.vboFcount_a_Pos0 * this.FSIZE;    
                                 // (4 floats * bytes/float) 
                                 // # of bytes from START of vbo to the START
                                 // of 1st a_Colr0 attrib value in vboContents[]
-	            //-----------------------GPU memory locations:
+
+  //-----------------------GPU memory locations----------------------------
 	this.vboLoc;									// GPU Location for Vertex Buffer Object, 
 	                              // returned by gl.createBuffer() function call
 	this.shaderLoc;								// GPU Location for compiled Shader-program  
@@ -198,7 +172,7 @@ function VBObox0() {
 	this.a_PosLoc;								// GPU location for 'a_Pos0' attribute
 	this.a_ColrLoc;								// GPU location for 'a_Colr0' attribute
 
-	            //---------------------- Uniform locations &values in our shaders
+  //-------------- Uniform locations &values in our shaders----------------
 	this.ModelMat = new Matrix4();	// Transforms CVV axes to model axes.
 	this.u_ModelMatLoc;							// GPU location for u_ModelMat uniform
 }
@@ -276,7 +250,6 @@ VBObox0.prototype.init = function() {
     						'.init() failed to get the GPU location of attribute a_Colr0');
     return -1;	// error exit.
   }
-  
   // c2) Find All Uniforms:-----------------------------------------------------
   //Get GPU storage location for each uniform var used in our shader programs: 
 	this.u_ModelMatLoc = gl.getUniformLocation(this.shaderLoc, 'u_ModelMat0');
@@ -374,15 +347,12 @@ VBObox0.prototype.adjust = function() {
         console.log('ERROR! before' + this.constructor.name + 
   						'.adjust() call you needed to call this.switchToMe()!!');
   }  
-	// Adjust values for our uniforms,
+	// // Adjust values for our uniforms,
+  // this.ModelMat.setRotate(g_angleNow0, 0, 0, 1);	  // rotate drawing axes,
+  // this.ModelMat.translate(0.35, 0, 0);							// then translate them.
+  // this.ModelMat.setIdentity();
+  this.ModelMat.set(g_worldMat);
 
-		this.ModelMat.setIdentity();
-// THIS DOESN'T WORK!!  this.ModelMatrix = g_worldMat;
-  this.ModelMat.set(g_worldMat);	// use our global, shared camera.
-// READY to draw in 'world' coord axes.
-	
-//  this.ModelMat.rotate(g_angleNow0, 0, 0, 1);	  // rotate drawing axes,
-//  this.ModelMat.translate(0.35, 0, 0);							// then translate them.
   //  Transfer new uniforms' values to the GPU:-------------
   // Send  new 'ModelMat' values to the GPU's 'u_ModelMat1' uniform: 
   gl.uniformMatrix4fv(this.u_ModelMatLoc,	// GPU location of the uniform
@@ -402,11 +372,13 @@ VBObox0.prototype.draw = function() {
   						'.draw() call you needed to call this.switchToMe()!!');
   }  
   // ----------------------------Draw the contents of the currently-bound VBO:
-  gl.drawArrays(gl.LINES, 	    // select the drawing primitive to draw,
-                  // choices: gl.POINTS, gl.LINES, gl.LINE_STRIP, gl.LINE_LOOP, 
-                  //          gl.TRIANGLES, gl.TRIANGLE_STRIP, ...
-  								0, 								// location of 1st vertex to draw;
-  								this.vboVerts);		// number of vertices to draw on-screen.
+  // gl.drawArrays(gl.TRIANGLES, 	    // select the drawing primitive to draw,
+  //                 // choices: gl.POINTS, gl.LINES, gl.LINE_STRIP, gl.LINE_LOOP, 
+  //                 //          gl.TRIANGLES, gl.TRIANGLE_STRIP, ...
+  // 								0, 								// location of 1st vertex to draw;
+  // 								this.vboVerts);		// number of vertices to draw on-screen.
+  drawGrid();
+  drawAxes();
 }
 
 VBObox0.prototype.reload = function() {
@@ -482,6 +454,7 @@ function VBObox1() {
     gl_Position = u_ModelMatrix * a_Pos1;
   	 v_Colr1 = a_Colr1;
    }`;
+
 //========YOUR CHOICE OF 3 Fragment shader programs=======
 //				(use /* and */ to uncomment ONLY ONE)
 // Each is an example of how to use the built-in vars for gl.POINTS to
@@ -524,6 +497,7 @@ function VBObox1() {
       } else {discard;};
   }`;
 //*/
+
 	this.vboContents = //---------------------------------------------------------
 		new Float32Array ([					// Array of vertex attribute values we will
   															// transfer to GPU's vertex buffer object (VBO)
@@ -768,12 +742,8 @@ VBObox1.prototype.adjust = function() {
   						'.adjust() call you needed to call this.switchToMe()!!');
   }
 	// Adjust values for our uniforms,
-	this.ModelMatrix.setIdentity();
-// THIS DOESN'T WORK!!  this.ModelMatrix = g_worldMat;
-  this.ModelMatrix.set(g_worldMat);
-
-//  this.ModelMatrix.rotate(g_angleNow1, 0, 0, 1);	// -spin drawing axes,
-  this.ModelMatrix.translate(1.0, -2.0, 0);						// then translate them.
+  this.ModelMatrix.setRotate(g_angleNow1, 0, 0, 1);	// -spin drawing axes,
+  this.ModelMatrix.translate(0.35, -0.15, 0);						// then translate them.
   //  Transfer new uniforms' values to the GPU:-------------
   // Send  new 'ModelMat' values to the GPU's 'u_ModelMat1' uniform: 
   gl.uniformMatrix4fv(this.u_ModelMatrixLoc,	// GPU location of the uniform
@@ -792,11 +762,13 @@ VBObox1.prototype.draw = function() {
   }
   
   // ----------------------------Draw the contents of the currently-bound VBO:
+    // ----------------------------Draw the contents of the currently-bound VBO:
   gl.drawArrays(gl.POINTS,		    // select the drawing primitive to draw:
-                  // choices: gl.POINTS, gl.LINES, gl.LINE_STRIP, gl.LINE_LOOP, 
-                  //          gl.TRIANGLES, gl.TRIANGLE_STRIP,
-  							0, 								// location of 1st vertex to draw;
-  							this.vboVerts);		// number of vertices to draw on-screen.
+    // choices: gl.POINTS, gl.LINES, gl.LINE_STRIP, gl.LINE_LOOP, 
+    //          gl.TRIANGLES, gl.TRIANGLE_STRIP,
+  0, 								// location of 1st vertex to draw;
+  this.vboVerts);		// number of vertices to draw on-screen.
+
 }
 
 
@@ -1122,12 +1094,9 @@ VBObox2.prototype.adjust = function() {
   }
 
 	// Adjust values for our uniforms;-------------------------------------------
-// THIS DOESN'T WORK!!  this.ModelMatrix = g_worldMat;
-  this.ModelMatrix.set(g_worldMat);
-	// Ready to draw in World coord axes.
-
   this.ModelMatrix.translate(-0.3, 0.0, 0.0); //Shift origin leftwards,
   this.ModelMatrix.rotate(g_angleNow2, 0, 0, 1);	// -spin drawing axes,
+
   //  Transfer new uniforms' values to the GPU:--------------------------------
   // Send  new 'ModelMat' values to the GPU's 'u_ModelMat1' uniform: 
   gl.uniformMatrix4fv(this.u_ModelMatrixLoc,	  // GPU location of the uniform
@@ -1206,5 +1175,94 @@ VBObox2.prototype.restore = function() {
 */
 
 //=============================================================================
+//=========================Shape Drawing Functions============================
 //=============================================================================
-//=============================================================================
+
+//------------------------Functions for filling VBO---------------------------
+// Function for generating a green grid across the XY plane. Written by Prof. Jack Tumblin.
+function makeGroundGrid() {
+	// Create a list of vertices that create a large grid of lines in the x,y plane
+	// centered at x=y=z=0.  Draw this shape using the GL_LINES primitive.
+
+		var xcount = 100;			// # of lines to draw in x,y to make the grid.
+		var ycount = 100;
+		var xymax	= 50.0;			// grid size; extends to cover +/-xymax in x and y.
+		var xColr = new Float32Array([1.0, 1.0, 0.3]);	// bright yellow
+		var yColr = new Float32Array([0.5, 1.0, 0.5]);	// bright green.
+		var floatsPerVertex = 7; // number of floats in a given vertex; x, y, z, w, r, g, b
+
+		// Create an (global) array to hold this ground-plane's vertices:
+		gndVerts = new Float32Array(floatsPerVertex*2*(xcount+ycount));
+							// draw a grid made of xcount+ycount lines; 2 vertices per line.
+
+		var xgap = xymax/(xcount-1);		// HALF-spacing between lines in x,y;
+		var ygap = xymax/(ycount-1);		// (why half? because v==(0line number/2))
+
+		// First, step thru x values as we make vertical lines of constant-x:
+		for(v=0, j=0; v<2*xcount; v++, j+= floatsPerVertex) {
+			if(v%2==0) {	// put even-numbered vertices at (xnow, -xymax, 0)
+				gndVerts[j  ] = -xymax + (v  )*xgap;	// x
+				gndVerts[j+1] = -xymax;								// y
+				gndVerts[j+2] = 0.0;									// z
+				gndVerts[j+3] = 1.0;									// w.
+			}
+			else {				// put odd-numbered vertices at (xnow, +xymax, 0).
+				gndVerts[j  ] = -xymax + (v-1)*xgap;	// x
+				gndVerts[j+1] = xymax;								// y
+				gndVerts[j+2] = 0.0;									// z
+				gndVerts[j+3] = 1.0;									// w.
+			}
+			gndVerts[j+4] = xColr[0];			// red
+			gndVerts[j+5] = xColr[1];			// grn
+			gndVerts[j+6] = xColr[2];			// blu
+		}
+		// Second, step thru y values as wqe make horizontal lines of constant-y:
+		// (don't re-initialize j--we're adding more vertices to the array)
+		for(v=0; v<2*ycount; v++, j+= floatsPerVertex) {
+			if(v%2==0) {		// put even-numbered vertices at (-xymax, ynow, 0)
+				gndVerts[j  ] = -xymax;								// x
+				gndVerts[j+1] = -xymax + (v  )*ygap;	// y
+				gndVerts[j+2] = 0.0;									// z
+				gndVerts[j+3] = 1.0;									// w.
+			}
+			else {					// put odd-numbered vertices at (+xymax, ynow, 0).
+				gndVerts[j  ] = xymax;								// x
+				gndVerts[j+1] = -xymax + (v-1)*ygap;	// y
+				gndVerts[j+2] = 0.0;									// z
+				gndVerts[j+3] = 1.0;									// w.
+			}
+			gndVerts[j+4] = yColr[0];			// red
+			gndVerts[j+5] = yColr[1];			// grn
+			gndVerts[j+6] = yColr[2];			// blu
+		}
+}
+
+// Function for drawing the X-Y-Z axes. Written by Prof. Jack Tumblin
+function makeAxes() {
+  myAxes = new Float32Array([
+		// Drawing Axes: Draw them using gl.LINES drawing primitive;
+     	// +x axis RED; +y axis GREEN; +z axis BLUE; origin: GRAY
+		 0.0,  0.0,  0.0, 1.0,		0.3,  0.3,  0.3,	// X axis line (origin: gray)
+		 1.3,  0.0,  0.0, 1.0,		1.0,  0.3,  0.3,	// 						 (endpoint: red)
+
+		 0.0,  0.0,  0.0, 1.0,    0.3,  0.3,  0.3,	// Y axis line (origin: white)
+		 0.0,  1.3,  0.0, 1.0,		0.3,  1.0,  0.3,	//						 (endpoint: green)
+
+		 0.0,  0.0,  0.0, 1.0,		0.3,  0.3,  0.3,	// Z axis line (origin:white)
+		 0.0,  0.0,  1.3, 1.0,		0.3,  0.3,  1.0,	//						 (endpoint: blue)
+  ]);
+  return myAxes;
+}
+
+//------------------Functions for actually drawing shapes-----------------------
+// World Box:
+function drawGrid() {
+	gl.drawArrays(gl.LINES, 0, gndVerts.length / 7);
+}
+
+function drawAxes() {
+	gl.drawArrays(gl.LINES, gndVerts.length / 7, myAxes.length / 7);
+}
+
+// Other Shapes:
+
