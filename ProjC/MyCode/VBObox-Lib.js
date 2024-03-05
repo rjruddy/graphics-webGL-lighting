@@ -125,7 +125,7 @@ function VBObox0() {
     allVerts[i] = gndVerts[j];
   }
   // starting point of axes = i
-  axesStart = i;						
+  axesStart = i;		
   for(j=0; j< myAxes.length; i++, j++) {
     allVerts[i] = myAxes[j];
   }
@@ -350,6 +350,9 @@ VBObox0.prototype.adjust = function() {
 	// // Adjust values for our uniforms,
   // this.ModelMat.setRotate(g_angleNow0, 0, 0, 1);	  // rotate drawing axes,
   // this.ModelMat.translate(0.35, 0, 0);							// then translate them.
+  this.ModelMat.setIdentity();
+  this.ModelMat.set(g_worldMat);
+
   //  Transfer new uniforms' values to the GPU:-------------
   // Send  new 'ModelMat' values to the GPU's 'u_ModelMat1' uniform: 
   gl.uniformMatrix4fv(this.u_ModelMatLoc,	// GPU location of the uniform
@@ -369,11 +372,13 @@ VBObox0.prototype.draw = function() {
   						'.draw() call you needed to call this.switchToMe()!!');
   }  
   // ----------------------------Draw the contents of the currently-bound VBO:
-  gl.drawArrays(gl.TRIANGLES, 	    // select the drawing primitive to draw,
-                  // choices: gl.POINTS, gl.LINES, gl.LINE_STRIP, gl.LINE_LOOP, 
-                  //          gl.TRIANGLES, gl.TRIANGLE_STRIP, ...
-  								0, 								// location of 1st vertex to draw;
-  								this.vboVerts);		// number of vertices to draw on-screen.
+  // gl.drawArrays(gl.TRIANGLES, 	    // select the drawing primitive to draw,
+  //                 // choices: gl.POINTS, gl.LINES, gl.LINE_STRIP, gl.LINE_LOOP, 
+  //                 //          gl.TRIANGLES, gl.TRIANGLE_STRIP, ...
+  // 								0, 								// location of 1st vertex to draw;
+  // 								this.vboVerts);		// number of vertices to draw on-screen.
+  drawGrid();
+  drawAxes();
 }
 
 VBObox0.prototype.reload = function() {
@@ -757,8 +762,13 @@ VBObox1.prototype.draw = function() {
   }
   
   // ----------------------------Draw the contents of the currently-bound VBO:
-  drawGrid();
-  drawAxes();
+    // ----------------------------Draw the contents of the currently-bound VBO:
+  gl.drawArrays(gl.POINTS,		    // select the drawing primitive to draw:
+    // choices: gl.POINTS, gl.LINES, gl.LINE_STRIP, gl.LINE_LOOP, 
+    //          gl.TRIANGLES, gl.TRIANGLE_STRIP,
+  0, 								// location of 1st vertex to draw;
+  this.vboVerts);		// number of vertices to draw on-screen.
+
 }
 
 
@@ -1251,7 +1261,7 @@ function drawGrid() {
 }
 
 function drawAxes() {
-	gl.drawArrays(gl.LINES, axesStart, myAxes.length / 7);
+	gl.drawArrays(gl.LINES, gndVerts.length / 7, myAxes.length / 7);
 }
 
 // Other Shapes:

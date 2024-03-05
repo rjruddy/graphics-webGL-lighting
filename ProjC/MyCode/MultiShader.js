@@ -116,6 +116,8 @@ var g_show0 = 1;								// 0==Show, 1==Hide VBO0 contents on-screen.
 var g_show1 = 1;								// 	"					"			VBO1		"				"				" 
 var g_show2 = 1;                //  "         "     VBO2    "       "       "
 
+g_worldMat = new Matrix4();				// Changes CVV drawing axes to 'world' axes.
+
 function main() {
 //=============================================================================
   // Retrieve the HTML-5 <canvas> element where webGL will draw our pictures:
@@ -168,6 +170,8 @@ function main() {
                         // including ground-plane,                       
   part1Box.init(gl);		//  "		"		"  for 1st kind of shading & lighting (Gouraud)
 	part2Box.init(gl);    //  "   "   "  for 2nd kind of shading & lighting (Phong)
+
+  setCamera();
 
   window.addEventListener("keydown", myKeyDown, false);
 	
@@ -310,6 +314,25 @@ function VBO2toggle() {
   console.log('g_show2: '+g_show2);
 }
 
+//temporary camera helper func
+function setCamera() {
+  //============================================================================
+  // PLACEHOLDER:  sets a fixed camera at a fixed position for use by
+  // ALL VBObox objects.  REPLACE This with your own camera-control code.
+  
+    g_worldMat.setIdentity();
+    g_worldMat.perspective(42.0,   // FOVY: top-to-bottom vertical image angle, in degrees
+                        1.0,   // Image Aspect Ratio: camera lens width/height
+                        1.0,   // camera z-near distance (always positive; frustum begins at z = -znear)
+                        200.0);  // camera z-far distance (always positive; frustum ends at z = -zfar)
+  
+    g_worldMat.lookAt( 5.0, 5.0, 3.0,	// center of projection
+                     0.0, 0.0, 0.0,	// look-at point 
+                     0.0, 0.0, 1.0);	// View UP vector.
+    // READY to draw in the 'world' coordinate system.
+  //------------END COPY
+  
+  }
 
 // Keypress event handler for Camera Movement
 // Written originally by Prof. Jack Tumblin, heavily modified by Rachel Ruddy to implement movement logic
