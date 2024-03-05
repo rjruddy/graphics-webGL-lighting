@@ -166,8 +166,8 @@ function main() {
   // Initialize each of our 'vboBox' objects: 
   worldBox.init(gl);		// VBO + shaders + uniforms + attribs for our 3D world,
                         // including ground-plane,                       
-  part1Box.init(gl);		//  "		"		"  for 1st kind of shading & lighting
-	part2Box.init(gl);    //  "   "   "  for 2nd kind of shading & lighting
+  part1Box.init(gl);		//  "		"		"  for 1st kind of shading & lighting (Gouraud)
+	part2Box.init(gl);    //  "   "   "  for 2nd kind of shading & lighting (Phong)
 	
   gl.clearColor(0.2, 0.2, 0.2, 1);	  // RGBA color for clearing <canvas>
   

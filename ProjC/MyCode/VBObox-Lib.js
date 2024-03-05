@@ -757,11 +757,8 @@ VBObox1.prototype.draw = function() {
   }
   
   // ----------------------------Draw the contents of the currently-bound VBO:
-  gl.drawArrays(gl.POINTS,		    // select the drawing primitive to draw:
-                  // choices: gl.POINTS, gl.LINES, gl.LINE_STRIP, gl.LINE_LOOP, 
-                  //          gl.TRIANGLES, gl.TRIANGLE_STRIP,
-  							0, 								// location of 1st vertex to draw;
-  							this.vboVerts);		// number of vertices to draw on-screen.
+  drawGrid();
+  drawAxes();
 }
 
 
@@ -1168,8 +1165,10 @@ VBObox2.prototype.restore = function() {
 */
 
 //=============================================================================
-//=========================Vertex Drawing Functions============================
+//=========================Shape Drawing Functions============================
 //=============================================================================
+
+//------------------------Functions for filling VBO---------------------------
 // Function for generating a green grid across the XY plane. Written by Prof. Jack Tumblin.
 function makeGroundGrid() {
 	// Create a list of vertices that create a large grid of lines in the x,y plane
@@ -1244,3 +1243,16 @@ function makeAxes() {
   ]);
   return myAxes;
 }
+
+//------------------Functions for actually drawing shapes-----------------------
+// World Box:
+function drawGrid() {
+	gl.drawArrays(gl.LINES, 0, gndVerts.length / 7);
+}
+
+function drawAxes() {
+	gl.drawArrays(gl.LINES, axesStart, myAxes.length / 7);
+}
+
+// Other Shapes:
+
