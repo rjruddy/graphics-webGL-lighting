@@ -1,0 +1,4 @@
+v15: Depth testing enabled; clears color buffer AND depth buffer at start of drawAll();.
+
+v16: GLSL code: replaced awkward appending of single-line strings w/ one single multi-line string that begins/ends with back-tick (‘) (keyboard top left: just left of ‘1’)
+
