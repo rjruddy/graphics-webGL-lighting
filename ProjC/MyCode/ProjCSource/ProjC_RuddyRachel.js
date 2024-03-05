@@ -131,6 +131,8 @@ var g_show1 = 1;								// 	"					"			VBO1		"				"				"
 var g_show2 = 1;                //  "         "     VBO2    "       "       "
 
 g_worldMat = new Matrix4();				// Changes CVV drawing axes to 'world' axes.
+g_viewAll = new Matrix4();      // Global view matrix
+g_
 
 function main() {
 //=============================================================================
@@ -214,7 +216,7 @@ function main() {
     requestAnimationFrame(tick, g_canvasID); // browser callback request; wait
                                 // til browser is ready to re-draw canvas, then
     timerAll();  // Update all time-varying params, and
-    drawAll();                // Draw all the VBObox contents
+    drawResize();   // Draw all the VBObox contents (calls drawAll()
     };
   //------------------------------------
   tick();                       // do it again!
@@ -304,6 +306,28 @@ console.log("wait b4 draw: ", b4Wait, "drawWait: ", drawWait, "mSec");
 */
 }
 
+function drawResize() {
+	//==============================================================================
+	// Called when user re-sizes their browser window , because our HTML file
+	// contains:  <body onload="main()" onresize="winResize()">
+
+		//Report our current browser-window contents:
+
+	// 	console.log('g_Canvas width,height=', g_canvas.width, g_canvas.height);
+	//  console.log('Browser window: innerWidth,innerHeight=',
+	// 																innerWidth, innerHeight);
+	// 																// http://www.w3schools.com/jsref/obj_window.asp
+
+
+		//Make canvas fill the top 3/4 of our browser window:
+		var xtraMargin = 16;    // keep a margin (otherwise, browser adds scroll-bars)
+		g_canvas.width = innerWidth - xtraMargin;
+		g_canvas.height = (innerHeight*3/4) - xtraMargin;
+		g_canvas.aratio = g_canvas.width / g_canvas.height;
+		// IMPORTANT!  Need a fresh drawing in the re-sized viewports.
+		drawAll();				// draw in all viewports.
+}
+
 function VBO0toggle() {
 //=============================================================================
 // Called when user presses HTML-5 button 'Show/Hide VBO0'.
@@ -334,13 +358,13 @@ function setCamera() {
   // PLACEHOLDER:  sets a fixed camera at a fixed position for use by
   // ALL VBObox objects.  REPLACE This with your own camera-control code.
   
-    g_worldMat.setIdentity();
-    g_worldMat.perspective(42.0,   // FOVY: top-to-bottom vertical image angle, in degrees
+  g_viewAll.setIdentity();
+  g_viewAll.perspective(42.0,   // FOVY: top-to-bottom vertical image angle, in degrees
                         1.0,   // Image Aspect Ratio: camera lens width/height
                         1.0,   // camera z-near distance (always positive; frustum begins at z = -znear)
                         200.0);  // camera z-far distance (always positive; frustum ends at z = -zfar)
   
-    g_worldMat.lookAt( 5.0, 5.0, 3.0,	// center of projection
+  g_viewAll.lookAt( 5.0, 5.0, 3.0,	// center of projection
                      0.0, 0.0, 0.0,	// look-at point 
                      0.0, 0.0, 1.0);	// View UP vector.
     // READY to draw in the 'world' coordinate system.
