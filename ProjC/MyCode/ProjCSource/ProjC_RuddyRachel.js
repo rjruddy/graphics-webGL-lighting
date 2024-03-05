@@ -76,6 +76,7 @@ VBOboxes.  Move all the uniform-adjusting operations from that JS function into 
 var gl;													// WebGL rendering context -- the 'webGL' object
 																// in JavaScript with all its member fcns & data
 var g_canvasID;									// HTML-5 'canvas' element ID#
+var g_canvas = document.getElementById('webgl');
 
 // For multiple VBOs & Shaders:-----------------
 worldBox = new VBObox0();		  // Holds VBO & shaders for 3D 'world' ground-plane grid, etc;
@@ -132,7 +133,7 @@ var g_show2 = 1;                //  "         "     VBO2    "       "       "
 
 g_worldMat = new Matrix4();				// Changes CVV drawing axes to 'world' axes.
 g_viewAll = new Matrix4();      // Global view matrix
-g_
+g_projAll = new Matrix4();
 
 function main() {
 //=============================================================================
@@ -281,8 +282,31 @@ function drawAll() {
   // Clear on-screen HTML-5 <canvas> object:
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-var b4Draw = Date.now();
-var b4Wait = b4Draw - g_lastMS;
+  var b4Draw = Date.now();
+  var b4Wait = b4Draw - g_lastMS;
+
+  aim_x = eye_x + Math.cos(theta);
+	aim_y = eye_y + Math.sin(theta);
+	aim_z = eye_z + tilt;
+
+	var far = 30
+	var near = 1
+
+//----------------------Perspective Viewport------------------------
+
+  gl.viewport(0,							// Viewport lower-left corner
+			0, 								// location(in pixels)
+			g_canvas.width, 				// viewport width,
+			g_canvas.height);				// viewport height in pixels.
+  //set identity  var projMatrix = new Matrix4(); //Perspective(FOVY, aspect_ratio, zNear, zFar)
+
+  //TODO: Create projection matrix
+
+
+  g_projAll.perspective(42, 1, 1, 1000);
+  g_viewAll.setLookAt(eye_x, eye_y, eye_z,
+        aim_x, aim_y, aim_z,
+        0, 0, 1);
 
 	if(g_show0 == 1) {	// IF user didn't press HTML button to 'hide' VBO0:
 	  worldBox.switchToMe();  // Set WebGL to render from this VBObox.
