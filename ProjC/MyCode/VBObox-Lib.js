@@ -71,42 +71,14 @@ As each 'VBObox' object can contain:
   -- a DIFFERENT set of attributes that define a vertex for that shader program, 
   -- a DIFFERENT number of vertices to used to fill the VBOs in GPU memory, and 
   -- a DIFFERENT set of uniforms transferred to GPU memory for shader use.  
-  THUS:
-		I don't see any easy way to use the exact same object constructors and 
-		prototypes for all VBObox objects.  Every additional VBObox objects may vary 
-		substantially, so I recommend that you copy and re-name an existing VBObox 
-		prototype object, and modify as needed, as shown here. 
-		(e.g. to make the VBObox3 object, copy the VBObox2 constructor and 
-		all its prototype functions, then modify their contents for VBObox3 
-		activities.)
-
 */
-
 // Written for EECS 351-2,	Intermediate Computer Graphics,
 //							Northwestern Univ. EECS Dept., Jack Tumblin
-// 2016.05.26 J. Tumblin-- Created; tested on 'TwoVBOs.html' starter code.
-// 2017.02.20 J. Tumblin-- updated for EECS 351-1 use for Project C.
-// 2018.04.11 J. Tumblin-- minor corrections/renaming for particle systems.
-//    --11e: global 'gl' replaced redundant 'myGL' fcn args; 
-//    --12: added 'SwitchToMe()' fcn to simplify 'init()' function and to fix 
-//      weird subtle errors that sometimes appear when we alternate 'adjust()'
-//      and 'draw()' functions of different VBObox objects. CAUSE: found that
-//      only the 'draw()' function (and not the 'adjust()' function) made a full
-//      changeover from one VBObox to another; thus calls to 'adjust()' for one
-//      VBObox could corrupt GPU contents for another.
-//      --Created vboStride, vboOffset members to centralize VBO layout in the 
-//      constructor function.
-//    -- 13 (abandoned) tried to make a 'core' or 'resuable' VBObox object to
-//      which we would add on new properties for shaders, uniforms, etc., but
-//      I decided there was too little 'common' code that wasn't customized.
-//=============================================================================
-
 
 //=============================================================================
+//==========================VBO Boxes and Methods==============================
 //=============================================================================
 function VBObox0() {
-//=============================================================================
-//=============================================================================
 // CONSTRUCTOR for one re-usable 'VBObox0' object that holds all data and fcns
 // needed to render vertices from one Vertex Buffer Object (VBO) using one 
 // separate shader program (a vertex-shader & fragment-shader pair) and one
@@ -137,6 +109,9 @@ function VBObox0() {
   void main() {
     gl_FragColor = vec4(v_Colr0, 1.0);
   }`;
+
+  //call grid and axis creators here
+  //remember to use glLineWidth for the axes to be larger
 
 	this.vboContents = //---------------------------------------------------------
 	new Float32Array ([						// Array of vertex attribute values we will
@@ -1187,5 +1162,79 @@ VBObox2.prototype.restore = function() {
 */
 
 //=============================================================================
+//=========================Vertex Drawing Functions============================
 //=============================================================================
-//=============================================================================
+// Function for generating a green grid across the XY plane. Written by Prof. Jack Tumblin.
+function makeGroundGrid() {
+	// Create a list of vertices that create a large grid of lines in the x,y plane
+	// centered at x=y=z=0.  Draw this shape using the GL_LINES primitive.
+
+		var xcount = 100;			// # of lines to draw in x,y to make the grid.
+		var ycount = 100;
+		var xymax	= 50.0;			// grid size; extends to cover +/-xymax in x and y.
+		var xColr = new Float32Array([1.0, 1.0, 0.3]);	// bright yellow
+		var yColr = new Float32Array([0.5, 1.0, 0.5]);	// bright green.
+		var floatsPerVertex = 7; // number of floats in a given vertex; x, y, z, w, r, g, b
+
+		// Create an (global) array to hold this ground-plane's vertices:
+		gndVerts = new Float32Array(floatsPerVertex*2*(xcount+ycount));
+							// draw a grid made of xcount+ycount lines; 2 vertices per line.
+
+		var xgap = xymax/(xcount-1);		// HALF-spacing between lines in x,y;
+		var ygap = xymax/(ycount-1);		// (why half? because v==(0line number/2))
+
+		// First, step thru x values as we make vertical lines of constant-x:
+		for(v=0, j=0; v<2*xcount; v++, j+= floatsPerVertex) {
+			if(v%2==0) {	// put even-numbered vertices at (xnow, -xymax, 0)
+				gndVerts[j  ] = -xymax + (v  )*xgap;	// x
+				gndVerts[j+1] = -xymax;								// y
+				gndVerts[j+2] = 0.0;									// z
+				gndVerts[j+3] = 1.0;									// w.
+			}
+			else {				// put odd-numbered vertices at (xnow, +xymax, 0).
+				gndVerts[j  ] = -xymax + (v-1)*xgap;	// x
+				gndVerts[j+1] = xymax;								// y
+				gndVerts[j+2] = 0.0;									// z
+				gndVerts[j+3] = 1.0;									// w.
+			}
+			gndVerts[j+4] = xColr[0];			// red
+			gndVerts[j+5] = xColr[1];			// grn
+			gndVerts[j+6] = xColr[2];			// blu
+		}
+		// Second, step thru y values as wqe make horizontal lines of constant-y:
+		// (don't re-initialize j--we're adding more vertices to the array)
+		for(v=0; v<2*ycount; v++, j+= floatsPerVertex) {
+			if(v%2==0) {		// put even-numbered vertices at (-xymax, ynow, 0)
+				gndVerts[j  ] = -xymax;								// x
+				gndVerts[j+1] = -xymax + (v  )*ygap;	// y
+				gndVerts[j+2] = 0.0;									// z
+				gndVerts[j+3] = 1.0;									// w.
+			}
+			else {					// put odd-numbered vertices at (+xymax, ynow, 0).
+				gndVerts[j  ] = xymax;								// x
+				gndVerts[j+1] = -xymax + (v-1)*ygap;	// y
+				gndVerts[j+2] = 0.0;									// z
+				gndVerts[j+3] = 1.0;									// w.
+			}
+			gndVerts[j+4] = yColr[0];			// red
+			gndVerts[j+5] = yColr[1];			// grn
+			gndVerts[j+6] = yColr[2];			// blu
+		}
+}
+
+// Function for drawing the X-Y-Z axes. Written by Prof. Jack Tumblin
+function makeAxes() {
+  myAxes = new Float32Array([
+		// Drawing Axes: Draw them using gl.LINES drawing primitive;
+     	// +x axis RED; +y axis GREEN; +z axis BLUE; origin: GRAY
+		 0.0,  0.0,  0.0, 1.0,		0.3,  0.3,  0.3,	// X axis line (origin: gray)
+		 1.3,  0.0,  0.0, 1.0,		1.0,  0.3,  0.3,	// 						 (endpoint: red)
+
+		 0.0,  0.0,  0.0, 1.0,    0.3,  0.3,  0.3,	// Y axis line (origin: white)
+		 0.0,  1.3,  0.0, 1.0,		0.3,  1.0,  0.3,	//						 (endpoint: green)
+
+		 0.0,  0.0,  0.0, 1.0,		0.3,  0.3,  0.3,	// Z axis line (origin:white)
+		 0.0,  0.0,  1.3, 1.0,		0.3,  0.3,  1.0,	//						 (endpoint: blue)
+  ]);
+  return myAxes;
+}
