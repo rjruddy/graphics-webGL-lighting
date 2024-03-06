@@ -1254,6 +1254,7 @@ function makeAxes() {
   ]);
   return myAxes;
 }
+// Other Shapes found in Shapes-Lib.js
 
 //------------------Functions for actually drawing shapes-----------------------
 // World Box:
@@ -1268,4 +1269,7 @@ function drawAxes() {
 }
 
 // Other Shapes:
+// function drawSphere() {
+//   gl.drawArrays(gl.TRIANGLES, mySphere.length / 7, 0)
+// }
 
