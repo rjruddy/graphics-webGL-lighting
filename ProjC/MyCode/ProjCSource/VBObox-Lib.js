@@ -351,7 +351,7 @@ VBObox0.prototype.adjust = function() {
   // this.ModelMat.setRotate(g_angleNow0, 0, 0, 1);	  // rotate drawing axes,
   // this.ModelMat.translate(0.35, 0, 0);							// then translate them.
   // this.ModelMat.setIdentity();
-  this.ModelMat.set(g_worldMat);
+  this.ModelMat.set(g_projAll).multiply(g_viewAll);
 
   //  Transfer new uniforms' values to the GPU:-------------
   // Send  new 'ModelMat' values to the GPU's 'u_ModelMat1' uniform: 
@@ -1258,10 +1258,12 @@ function makeAxes() {
 //------------------Functions for actually drawing shapes-----------------------
 // World Box:
 function drawGrid() {
+  // gl.uniformMatrix4fv(this.u_ModelMatLoc,	false, this.ModelMat.elements);
 	gl.drawArrays(gl.LINES, 0, gndVerts.length / 7);
 }
 
 function drawAxes() {
+  // gl.uniformMatrix4fv(this.u_ModelMatLoc,	false, this.ModelMat.elements);
 	gl.drawArrays(gl.LINES, gndVerts.length / 7, myAxes.length / 7);
 }
 

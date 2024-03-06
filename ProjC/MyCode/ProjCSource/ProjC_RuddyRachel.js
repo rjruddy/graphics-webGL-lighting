@@ -299,11 +299,14 @@ function drawAll() {
 			g_canvas.width, 				// viewport width,
 			g_canvas.height);				// viewport height in pixels.
 
-  //set lookAt() with view Matrix using the eye and aim points
+  //set projection matrix perspective
+  g_projAll.setIdentity()
   g_projAll.perspective(42.0,   // FOVY: top-to-bottom vertical image angle, in degrees
                         g_canvas.width / g_canvas.height,   // Image Aspect Ratio: camera lens width/height
                         1,   // camera z-near distance (always positive; frustum begins at z = -znear)
                         200);
+
+  //set lookAt() with view Matrix using the eye and aim points
   setCamera();
   
 
