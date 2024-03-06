@@ -377,6 +377,7 @@ VBObox0.prototype.draw = function() {
   //                 //          gl.TRIANGLES, gl.TRIANGLE_STRIP, ...
   // 								0, 								// location of 1st vertex to draw;
   // 								this.vboVerts);		// number of vertices to draw on-screen.
+  this.ModelMat.set(g_projAll).multiply(g_viewAll);
   drawGrid();
   drawAxes();
 }

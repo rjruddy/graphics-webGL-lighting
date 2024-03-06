@@ -128,8 +128,8 @@ var aim_z = tilt;
 
 // For mouse/keyboard:------------------------
 var g_show0 = 1;								// 0==Show, 1==Hide VBO0 contents on-screen.
-var g_show1 = 1;								// 	"					"			VBO1		"				"				" 
-var g_show2 = 1;                //  "         "     VBO2    "       "       "
+var g_show1 = 0;								// 	"					"			VBO1		"				"				" 
+var g_show2 = 0;                //  "         "     VBO2    "       "       "
 
 g_worldMat = new Matrix4();				// Changes CVV drawing axes to 'world' axes.
 g_viewAll = new Matrix4();      // Global view matrix
@@ -172,12 +172,12 @@ function main() {
   // To correct the 'REVERSED DEPTH' problem, we could:
   //  a) reverse the sign of z before we render it (e.g. scale(1,1,-1); ugh.)
   //  b) reverse the usage of the depth-buffer's stored values, like this:
-  gl.enable(gl.DEPTH_TEST); // enabled by default, but let's be SURE.
+  // gl.enable(gl.DEPTH_TEST); // enabled by default, but let's be SURE.
 
-  gl.clearDepth(0.0);       // each time we 'clear' our depth buffer, set all
-                            // pixel depths to 0.0  (1.0 is DEFAULT)
-  gl.depthFunc(gl.GREATER); // draw a pixel only if its depth value is GREATER
-                            // than the depth buffer's stored value.
+  // gl.clearDepth(0.0);       // each time we 'clear' our depth buffer, set all
+  //                           // pixel depths to 0.0  (1.0 is DEFAULT)
+  // gl.depthFunc(gl.GREATER); // draw a pixel only if its depth value is GREATER
+  //                           // than the depth buffer's stored value.
                             // (gl.LESS is DEFAULT; reverse it!)
   //------------------end 'REVERSED DEPTH' fix---------------------------------
 
@@ -293,20 +293,19 @@ function drawAll() {
 	var near = 1
 
 //----------------------Perspective Viewport------------------------
-
+  //canvas width and height are set inside the drawResize() function and applied to perspective() 
   gl.viewport(0,							// Viewport lower-left corner
 			0, 								// location(in pixels)
 			g_canvas.width, 				// viewport width,
 			g_canvas.height);				// viewport height in pixels.
-  //set identity  var projMatrix = new Matrix4(); //Perspective(FOVY, aspect_ratio, zNear, zFar)
 
-  //TODO: Create projection matrix
-
-
-  g_projAll.perspective(42, 1, 1, 1000);
-  g_viewAll.setLookAt(eye_x, eye_y, eye_z,
-        aim_x, aim_y, aim_z,
-        0, 0, 1);
+  //set lookAt() with view Matrix using the eye and aim points
+  g_projAll.perspective(42.0,   // FOVY: top-to-bottom vertical image angle, in degrees
+                        g_canvas.width / g_canvas.height,   // Image Aspect Ratio: camera lens width/height
+                        1,   // camera z-near distance (always positive; frustum begins at z = -znear)
+                        200);
+  setCamera();
+  
 
 	if(g_show0 == 1) {	// IF user didn't press HTML button to 'hide' VBO0:
 	  worldBox.switchToMe();  // Set WebGL to render from this VBObox.
@@ -348,6 +347,11 @@ function drawResize() {
 		g_canvas.width = innerWidth - xtraMargin;
 		g_canvas.height = (innerHeight*3/4) - xtraMargin;
 		g_canvas.aratio = g_canvas.width / g_canvas.height;
+
+    // g_projAll.perspective(42.0,   // FOVY: top-to-bottom vertical image angle, in degrees
+    //                     g_canvas.width / g_canvas.height,   // Image Aspect Ratio: camera lens width/height
+    //                     1,   // camera z-near distance (always positive; frustum begins at z = -znear)
+    //                     200);  // camera z-far distance (always positive; frustum ends at z = -zfar)
 		// IMPORTANT!  Need a fresh drawing in the re-sized viewports.
 		drawAll();				// draw in all viewports.
 }
@@ -383,13 +387,13 @@ function setCamera() {
   // ALL VBObox objects.  REPLACE This with your own camera-control code.
   
   g_viewAll.setIdentity();
-  g_viewAll.perspective(42.0,   // FOVY: top-to-bottom vertical image angle, in degrees
-                        1.0,   // Image Aspect Ratio: camera lens width/height
-                        1.0,   // camera z-near distance (always positive; frustum begins at z = -znear)
-                        200.0);  // camera z-far distance (always positive; frustum ends at z = -zfar)
+
+  aim_x = eye_x + Math.cos(theta);
+  aim_y = eye_y + Math.sin(theta);
+  aim_z = eye_z + tilt;
   
-  g_viewAll.lookAt( 5.0, 5.0, 3.0,	// center of projection
-                     0.0, 0.0, 0.0,	// look-at point 
+  g_viewAll.lookAt(eye_x, eye_y, eye_z,	// center of projection
+                     aim_x, aim_y, aim_z,	// look-at point 
                      0.0, 0.0, 1.0);	// View UP vector.
     // READY to draw in the 'world' coordinate system.
   //------------END COPY
