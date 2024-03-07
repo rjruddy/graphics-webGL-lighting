@@ -745,6 +745,7 @@ VBObox1.prototype.adjust = function() {
 	// Adjust values for our uniforms,
   this.ModelMatrix.setRotate(g_angleNow1, 0, 0, 1);	// -spin drawing axes,
   this.ModelMatrix.translate(0.35, -0.15, 0);						// then translate them.
+  this.ModelMatrix.set(g_projAll).multiply(g_viewAll);
   //  Transfer new uniforms' values to the GPU:-------------
   // Send  new 'ModelMat' values to the GPU's 'u_ModelMat1' uniform: 
   gl.uniformMatrix4fv(this.u_ModelMatrixLoc,	// GPU location of the uniform
@@ -763,6 +764,7 @@ VBObox1.prototype.draw = function() {
   }
   
   // ----------------------------Draw the contents of the currently-bound VBO:
+  this.ModelMatrix.set(g_projAll).multiply(g_viewAll);
     // ----------------------------Draw the contents of the currently-bound VBO:
   gl.drawArrays(gl.POINTS,		    // select the drawing primitive to draw:
     // choices: gl.POINTS, gl.LINES, gl.LINE_STRIP, gl.LINE_LOOP, 
