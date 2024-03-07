@@ -445,6 +445,8 @@ function VBObox1() {
  `precision highp float;				// req'd in OpenGL ES if we use 'float'
   //
   uniform mat4 u_ModelMatrix;
+  uniform mat4 u_MvpMatrix;
+  uniform mat4 u_NormalMatrix;
   attribute vec4 a_Pos1;
   attribute vec3 a_Colr1;
   attribute float a_PtSiz1; 
@@ -452,7 +454,7 @@ function VBObox1() {
   //
   void main() {
     gl_PointSize = a_PtSiz1;
-    gl_Position = u_ModelMatrix * a_Pos1;
+    gl_Position = u_ModelMatrix * u_MvpMatrix * u_NormalMatrix * a_Pos1;
   	 v_Colr1 = a_Colr1;
    }`;
 
@@ -558,6 +560,8 @@ function VBObox1() {
 	
 	            //---------------------- Uniform locations &values in our shaders
 	this.ModelMatrix = new Matrix4();	// Transforms CVV axes to model axes.
+  this.MvpMatrix = new Matrix4();
+  this.NormalMatrix = new Matrix4();
 	this.u_ModelMatrixLoc;						// GPU location for u_ModelMat uniform
 };
 
@@ -612,8 +616,6 @@ VBObox1.prototype.init = function() {
   gl.bufferData(gl.ARRAY_BUFFER, 			  // GLenum target(same as 'bindBuffer()')
  					 				this.vboContents, 		// JavaScript Float32Array
   							 	gl.STATIC_DRAW);			// Usage hint.  
-  //	The 'hint' helps GPU allocate its shared memory for best speed & efficiency
-  //	(see OpenGL ES specification for more info).  Your choices are:
   //		--STATIC_DRAW is for vertex buffers rendered many times, but whose 
   //				contents rarely or never change.
   //		--DYNAMIC_DRAW is for vertex buffers rendered many times, but whose 
@@ -648,6 +650,18 @@ VBObox1.prototype.init = function() {
   if (!this.u_ModelMatrixLoc) { 
     console.log(this.constructor.name + 
     						'.init() failed to get GPU location for u_ModelMatrix uniform');
+    return;
+  }
+  this.u_MvpMatrixLoc = gl.getUniformLocation(this.shaderLoc, 'u_MvpMatrix');
+  if (!this.u_MvpMatrixLoc) { 
+    console.log(this.constructor.name + 
+    						'.init() failed to get GPU location for u_MvpMatrix uniform');
+    return;
+  }
+  this.u_NormalMatrixLoc = gl.getUniformLocation(this.shaderLoc, 'u_NormalMatrix');
+  if (!this.u_NormalMatrixLoc) { 
+    console.log(this.constructor.name + 
+    						'.init() failed to get GPU location for u_NormalMatrix uniform');
     return;
   }
 }
@@ -743,14 +757,29 @@ VBObox1.prototype.adjust = function() {
   						'.adjust() call you needed to call this.switchToMe()!!');
   }
 	// Adjust values for our uniforms,
-  this.ModelMatrix.setRotate(g_angleNow1, 0, 0, 1);	// -spin drawing axes,
-  this.ModelMatrix.translate(0.35, -0.15, 0);						// then translate them.
-  this.ModelMatrix.set(g_projAll).multiply(g_viewAll);
+  this.ModelMatrix.setIdentity();
+  this.MvpMatrix.setIdentity();
+  this.NormalMatrix.setIdentity();
+
+  // this.MvpMatrix = this.ModelMatrix.concat(g_projAll).concat(g_viewAll);
+  this.MvpMatrix.set(g_projAll);
+  this.MvpMatrix.concat(g_viewAll);
+  this.MvpMatrix.concat(this.ModelMatrix);
+
+  // this.ModelMatrix.setRotate(g_angleNow1, 0, 0, 1);	// -spin drawing axes,
+  // this.ModelMatrix.translate(0.35, -0.15, 0);						// then translate them.
+  // this.ModelMatrix.set(g_projAll).multiply(g_viewAll);
   //  Transfer new uniforms' values to the GPU:-------------
   // Send  new 'ModelMat' values to the GPU's 'u_ModelMat1' uniform: 
-  gl.uniformMatrix4fv(this.u_ModelMatrixLoc,	// GPU location of the uniform
-  										false, 										// use matrix transpose instead?
-  										this.ModelMatrix.elements);	// send data from Javascript.
+  gl.uniformMatrix4fv(this.u_ModelMatrixLoc,	
+  										false, 										
+  										this.ModelMatrix.elements);	
+  gl.uniformMatrix4fv(this.u_MvpMatrixLoc,	
+                      false, 										
+                      this.MvpMatrix.elements);	
+  gl.uniformMatrix4fv(this.u_NormalMatrixLoc,	
+                      false, 										
+                      this.NormalMatrix.elements);	
 }
 
 VBObox1.prototype.draw = function() {
