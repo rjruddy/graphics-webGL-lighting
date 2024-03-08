@@ -447,33 +447,42 @@ function VBObox1() {
   uniform mat4 u_ModelMatrix;
   uniform mat4 u_MvpMatrix;
   uniform mat4 u_NormalMatrix;
+
+  // uniform vec3 Ia;
+  // uniform vec3 Id;
+  // uniform vec3 Is;
+
   attribute vec4 a_Pos1;
+  // attribute vec3 a_Color;
   attribute vec3 a_Norm;
-  varying vec3 v_Norm1;
+  varying vec4 v_Color;
+
   //
   void main() {
+    vec4 transVec = u_NormalMatrix * vec4(a_Norm, 0.0);
+    vec3 normVec = normalize(transVec.xyz);
+    vec3 lightVec = vec3(0.0, 0.0, 1.0);
     gl_Position = u_MvpMatrix * a_Pos1;
-    v_Norm1 = a_Norm;
+      // float NdotL = dot(normVec,lightVec);
+      // float ambient = Ia*Ka;
+      // float diffuse = Id*Kd*NdotL;
+      // float specular = Is*Ks;
+      // v_Color = vec4(a_Color*dot(normVec,lightVec), 1.0); 
+      // v_Color = vec4(1.0, 0.0, 0.0, 1.0);
+    v_Color = vec4(a_Norm.xyz, 1.0);
    }`;
 
 //========Fragment shader program=======
 	this.FRAG_SRC = //---------------------- FRAGMENT SHADER source code 
  `precision mediump float;
-  varying vec3 v_Norm1;
+  varying vec4 v_Color;
   void main() {
-    gl_FragColor = vec4(v_Norm1.z, v_Norm1.z, v_Norm1.z, 1.0);
+    // gl_FragColor = v_Color;
+    gl_FragColor = vec4(v_Color.z, v_Color.z, v_Color.z, 1.0);
   }`;
 
 
 	this.vboContents = makeSphere();
-  //---------------------------------------------------------
-	// 	new Float32Array ([					// Array of vertex attribute values we will
-  // 															// transfer to GPU's vertex buffer object (VBO)
-	// 		// 1 vertex per line: pos1 x,y,z,w;   colr1; r,g,b;   ptSiz1; 
-  // 	1.0,  -1.0,	0.0, 1.0,		0.0, 1.0, 1.0,
-  //   0.0, 1.0, 0.0, 1.0,		1.0, 0.0, 1.0,
-  //   -1.0, -1.0, 0.0, 1.0,		1.0, 1.0, 0.0,
-  // ]);	
   
 	this.vboVerts = 960;							// # of vertices held in 'vboContents' array;
 	this.FSIZE = this.vboContents.BYTES_PER_ELEMENT;  
@@ -506,6 +515,7 @@ function VBObox1() {
                                 // == 4 floats * bytes/float
                                 //# of bytes from START of vbo to the START
                                 // of 1st a_Norm attrib value in vboContents[]
+  this.vboOffset_a_Color = this.vboOffset_a_Norm;
 
 	            //-----------------------GPU memory locations:                                
 	this.vboLoc;									// GPU Location for Vertex Buffer Object, 
@@ -514,6 +524,7 @@ function VBObox1() {
 	                            	// set by compile/link of VERT_SRC and FRAG_SRC.
 								          //------Attribute locations in our shaders:
 	this.a_Pos1Loc;							  // GPU location: shader 'a_Pos1' attribute
+  this.a_ColorLoc;               // GPU location: shader 'a_Color' attribute
 	this.a_NormLoc;							// GPU location: shader 'a_Norm' attribute
 	
 	            //---------------------- Uniform locations &values in our shaders
@@ -590,6 +601,12 @@ VBObox1.prototype.init = function() {
     						'.init() Failed to get GPU location of attribute a_Pos1');
     return -1;	// error exit.
   }
+  // this.a_ColorLoc = gl.getAttribLocation(this.shaderLoc, 'a_Color');
+  // if(this.a_ColorLoc < 0) {
+  //   console.log(this.constructor.name + 
+  //   						'.init() failed to get the GPU location of attribute a_Color');
+  //   return -1;	// error exit.
+  // }
  	this.a_NormLoc = gl.getAttribLocation(this.shaderLoc, 'a_Norm');
   if(this.a_NormLoc < 0) {
     console.log(this.constructor.name + 
@@ -610,12 +627,12 @@ VBObox1.prototype.init = function() {
     						'.init() failed to get GPU location for u_MvpMatrix uniform');
     return;
   }
-  // this.u_NormalMatrixLoc = gl.getUniformLocation(this.shaderLoc, 'u_NormalMatrix');
-  // if (!this.u_NormalMatrixLoc) { 
-  //   console.log(this.constructor.name + 
-  //   						'.init() failed to get GPU location for u_NormalMatrix uniform');
-  //   return;
-  // }
+  this.u_NormalMatrixLoc = gl.getUniformLocation(this.shaderLoc, 'u_NormalMatrix');
+  if (!this.u_NormalMatrixLoc) { 
+    console.log(this.constructor.name + 
+    						'.init() failed to get GPU location for u_NormalMatrix uniform');
+    return;
+  }
 }
 
 VBObox1.prototype.switchToMe = function () {
@@ -665,11 +682,22 @@ VBObox1.prototype.switchToMe = function () {
 		this.vboOffset_a_Pos1);						
 		              // Offset == how many bytes from START of buffer to the first
   								// value we will actually use?  (we start with position).
+  //want the color to be determined by the normals -- but what to do with negative normals?
+  // gl.vertexAttribPointer(
+  //   this.a_ColorLoc, 				// choose Vertex Shader attribute to fill with data
+  //   3, 							// how many values? 1,2,3 or 4. (we're using R,G,B)
+  //   gl.FLOAT, 			// data type for each value: usually gl.FLOAT
+  //   false, 					// did we supply fixed-point data AND it needs normalizing?
+  //   this.vboStride, 		// Stride -- how many bytes used to store each vertex?
+  //                   // (x,y,z,w, r,g,b, nx,ny,nz) * bytes/value
+  //   this.vboOffset_a_Color);			// Offset -- how many bytes from START of buffer to the
+                    // value we will actually use?  Need to skip over x,y,z,w
   gl.vertexAttribPointer(this.a_NormLoc, this.vboFcount_a_Norm,
                          gl.FLOAT, false, 
   						           this.vboStride,  this.vboOffset_a_Norm);
   //-- Enable this assignment of the attribute to its' VBO source:
   gl.enableVertexAttribArray(this.a_Pos1Loc);
+  // gl.enableVertexAttribArray(this.a_ColorLoc);
   gl.enableVertexAttribArray(this.a_NormLoc);
 }
 
@@ -710,7 +738,12 @@ VBObox1.prototype.adjust = function() {
   this.NormalMatrix.setIdentity();
 
   //Model Matrix manipulation
-  this.ModelMatrix.translate(0, 0, 0.1);
+  this.ModelMatrix.rotate(g_angleNow1, 0, 0, 1);
+
+  // pushMatrix(this.ModelMatrix);
+  //   this.ModelMatrix.translate(0, 0, 0.1);
+  //   this.ModelMatrix.rotate(g_angleNow1, 0, 0, 1);
+  // this.ModelMatrix = popMatrix();
 
   //Setting the contents of the MVP matrix using P * V * M
   this.MvpMatrix.set(g_projAll);

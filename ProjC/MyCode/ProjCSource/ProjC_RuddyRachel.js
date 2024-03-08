@@ -113,13 +113,13 @@ var g_posMin1 = -1.0;
 
 //------------For viewport controlling: -------------------------------
 var eye_x = 7;
-var eye_y = 7;
-var eye_z = 3;
+var eye_y = 0;
+var eye_z = 2
 var tilt = -0.25;
-var tiltRate = 0.02;
-var theta = 179.9;
-var thetaRate = 0.02;
-var velocity = 0.05;
+var tiltRate = 0.05;
+var theta = 260.75;
+var thetaRate = 0.05;
+var velocity = 0.1;
 
 //storing aim point just to avoid recalculation.
 var aim_x = 0;
@@ -246,14 +246,14 @@ function timerAll() {
   g_angleNow0 %= 360.0;   // keep angle >=0.0 and <360.0 degrees  
   g_angleNow1 %= 360.0;   
   g_angleNow2 %= 360.0;
-  if(g_angleNow1 > g_angleMax1) { // above the max?
-    g_angleNow1 = g_angleMax1;    // move back down to the max, and
-    g_angleRate1 = -g_angleRate1; // reverse direction of change.
-    }
-  else if(g_angleNow1 < g_angleMin1) {  // below the min?
-    g_angleNow1 = g_angleMin1;    // move back up to the min, and
-    g_angleRate1 = -g_angleRate1;
-    }
+  // if(g_angleNow1 > g_angleMax1) { // above the max?
+  //   g_angleNow1 = g_angleMax1;    // move back down to the max, and
+  //   g_angleRate1 = -g_angleRate1; // reverse direction of change.
+  //   }
+  // else if(g_angleNow1 < g_angleMin1) {  // below the min?
+  //   g_angleNow1 = g_angleMin1;    // move back up to the min, and
+  //   g_angleRate1 = -g_angleRate1;
+  //   }
   // Continuous movement:
   g_posNow0 += g_posRate0 * elapsedMS / 1000.0;
   g_posNow1 += g_posRate1 * elapsedMS / 1000.0;
