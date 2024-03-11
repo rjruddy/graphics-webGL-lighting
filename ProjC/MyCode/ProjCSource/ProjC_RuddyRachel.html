@@ -14,9 +14,26 @@
       <button type="button" onclick="VBO1toggle()">VBO-1 hide/show</button>
       <button type="button" onclick="VBO2toggle()">VBO-2 hide/show</button>
     </p>
-    <div id='Controls'>
-      Use WASD to change the direction in which your camera is pointing. <br>
-      Use the Up/Down arrow keys to move forwards and backwards and the Left/Right keys to strafe side to side.
+    <div id='Controls' style="display:block;">
+      Use WASD to change the direction in which your camera is pointing. Use the Up/Down arrow keys to move forwards and backwards and the Left/Right keys to strafe side to side.
+      <span id='diffuse' style="display:block;">
+        Diffuse Color Control:
+        <input type="range" min="0.0" max="1.0" step="0.01" id="diffuseR">R</input>
+        <input type="range" min="0.0" max="1.0" step="0.01" id="diffuseG">G</input>
+        <input type="range" min="0.0" max="1.0" step="0.01" id="diffuseB">B</input>
+      </span>
+      <span id='specular' style="display:block;">
+        Specular Color Control:
+        <input type="range" min="0.0" max="1.0" step="0.01" id="specularR">R</input>
+        <input type="range" min="0.0" max="1.0" step="0.01" id="specularG">G</input>
+        <input type="range" min="0.0" max="1.0" step="0.01" id="specularB">B</input>
+      </span>
+      <span id='ambient' style="display:block;">
+        Ambient Color Control:
+        <input type="range" min="0.0" max="1.0" step="0.01" id="specularR">R</input>
+        <input type="range" min="0.0" max="1.0" step="0.01" id="specularG">G</input>
+        <input type="range" min="0.0" max="1.0" step="0.01" id="specularB">B</input>
+      </span>
     </div> 
     <script src="lib/webgl-utils.js"></script>
     <script src="lib/webgl-debug.js"></script>
@@ -28,6 +45,7 @@
 --> 
 	<script src="VBObox-Lib.js"></script>
   <script src="Shapes-Lib.js"></script>
+  <!-- <script src="styles.css"></script> -->
     <script src="ProjC_RuddyRachel.js"></script>
   </body>
 </html>
