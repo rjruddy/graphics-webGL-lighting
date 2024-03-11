@@ -458,6 +458,8 @@ function VBObox1() {
   uniform float u_Kd;
   uniform float u_Ks;
 
+  uniform float u_Se; // Shinyness exponent
+
   uniform vec3 u_V; // camera "eye" position
 
   attribute vec4 a_Pos1;
@@ -469,23 +471,32 @@ function VBObox1() {
   void main() {
     vec4 transVec = u_NormalMatrix * vec4(a_Norm, 0.0);
     vec3 normVec = normalize(transVec.xyz);
-    vec3 lightVec = vec3(0.0, 0.0, 1.0);
+    vec3 lightVec = vec3(0.0, 0.0, 5.0);
     gl_Position = u_MvpMatrix * a_Pos1;
 
-    vec3 R = reflect(-lightVec, normVec);
-    float Se = 20.0;
-      // vec3 C = N * nDotL
-      // vec3 R = 2*normVec - lightVec
+    vec3 C = normVec * dot(normVec, lightVec);
+
+    vec4 posnVec = u_MvpMatrix * a_Pos1;
+    vec4 matrixHolder = u_ModelMatrix * vec4(0.0, 0.0, 0.0, 0.0);
+    vec3 normEye = normalize(u_V);
+
+    vec3 normPosn = normalize(posnVec.xyz);
+
+    vec3 R = reflect(normalize(-(lightVec - normPosn)), normVec); 
     float nDotL = max(dot(normVec, lightVec), 0.0);
-    float rDotV = max(dot(R, u_V), 0.0);
+    float rDotV = max(dot(R, normEye), 0.0);
+    float dist = distance(lightVec, a_Pos1.xyz);
+    float att = 1.0 / dist;
+    // float att = 1.0;
+
     vec3 ambient = u_Ia*u_Ka;
-    vec3 diffuse = u_Id*u_Kd*nDotL;
-    vec3 specular = u_Is*u_Ks*pow(rDotV, Se);
+    vec3 diffuse = u_Id*u_Kd*att*nDotL;
+    vec3 specular = u_Is * u_Ks * att * pow(rDotV, u_Se);
 
     //TESTING VARIABLE - removes errors from "unused" GLSL unforms/attributes.
-    vec3 tColor = a_Color * nDotL * u_Id * u_Ia * u_Kd * u_Ka * specular;
+    vec3 tColor = a_Color * nDotL * u_Id * u_Ia * u_Kd * u_Ka * specular * posnVec.x * matrixHolder.x;
      
-    v_Color = vec4(diffuse + ambient, 1.0 + (tColor.z * 0.0));
+    v_Color = vec4(diffuse + ambient + specular, 1.0 + (tColor.z * 0.0));
 
     //TEST v_Color valuues
     // v_Color = vec4(normVec + vec3(1.0, 1.0, 1.0) / 2.0, 1.0 + (tColor.z * 0.0)); //this actually makes color! not the right color tho.
@@ -558,6 +569,7 @@ function VBObox1() {
   this.u_Ka = 1.0;
   this.u_Kd = 1.0;
   this.u_Ks = 1.0;
+  this.u_Se = shinyness;
 
   this.u_V = new Vector3();
 
@@ -568,6 +580,7 @@ function VBObox1() {
   this.u_KaLoc;
   this.u_KdLoc;
   this.u_KsLoc;
+  this.u_SeLoc;
 
   this.u_VLoc;
 };
@@ -653,12 +666,12 @@ VBObox1.prototype.init = function() {
   }
   // c2) Find All Uniforms:-----------------------------------------------------
   //Get GPU storage location for each uniform var used in our shader programs: 
-//  this.u_ModelMatrixLoc = gl.getUniformLocation(this.shaderLoc, 'u_ModelMatrix');
-//   if (!this.u_ModelMatrixLoc) { 
-//     console.log(this.constructor.name + 
-//     						'.init() failed to get GPU location for u_ModelMatrix uniform');
-//     return;
-//   }
+ this.u_ModelMatrixLoc = gl.getUniformLocation(this.shaderLoc, 'u_ModelMatrix');
+  if (!this.u_ModelMatrixLoc) { 
+    console.log(this.constructor.name + 
+    						'.init() failed to get GPU location for u_ModelMatrix uniform');
+    return;
+  }
   this.u_MvpMatrixLoc = gl.getUniformLocation(this.shaderLoc, 'u_MvpMatrix');
   if (!this.u_MvpMatrixLoc) { 
     console.log(this.constructor.name + 
@@ -705,6 +718,12 @@ VBObox1.prototype.init = function() {
   if (!this.u_KsLoc) { 
     console.log(this.constructor.name + 
     						'.init() failed to get GPU location for u_Ks uniform');
+    return;
+  }
+  this.u_SeLoc = gl.getUniformLocation(this.shaderLoc, 'u_Se');
+  if (!this.u_SeLoc) { 
+    console.log(this.constructor.name + 
+    						'.init() failed to get GPU location for u_Se uniform');
     return;
   }
 
@@ -849,6 +868,8 @@ VBObox1.prototype.adjust = function() {
   this.u_Kd = diffuseRef;
   this.u_Ks = specularRef;
 
+  this.u_Se = shinyness;
+
   this.u_V.elements[0] = eye_x;
   this.u_V.elements[1] = eye_y;
   this.u_V.elements[2] = eye_z;
@@ -857,9 +878,9 @@ VBObox1.prototype.adjust = function() {
 
   //  Transfer new uniforms' values to the GPU:-------------
   // Send  new 'ModelMat' values to the GPU's 'u_ModelMat1' uniform: 
-  // gl.uniformMatrix4fv(this.u_ModelMatrixLoc,	
-  // 										false, 										
-  // 										this.ModelMatrix.elements);	
+  gl.uniformMatrix4fv(this.u_ModelMatrixLoc,	
+  										false, 										
+  										this.ModelMatrix.elements);	
   gl.uniformMatrix4fv(this.u_MvpMatrixLoc,	
                       false, 										
                       this.MvpMatrix.elements);	
@@ -876,6 +897,7 @@ VBObox1.prototype.adjust = function() {
   gl.uniform1f(this.u_KaLoc, this.u_Ka);
   gl.uniform1f(this.u_KdLoc, this.u_Kd);
   gl.uniform1f(this.u_KsLoc, this.u_Ks);
+  gl.uniform1f(this.u_SeLoc, this.u_Se);
 
   gl.uniform3f(this.u_VLoc, this.u_V.elements[0], this.u_V.elements[1], this.u_V.elements[2]);
 }

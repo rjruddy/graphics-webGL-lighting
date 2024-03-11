@@ -287,7 +287,7 @@ function drawAll() {
   ambientG = document.getElementById('ambientG').value; 
   ambientB = document.getElementById('ambientB').value; 
   ambientRef = document.getElementById('ambientRef').value; 
-  
+
   diffuseR = document.getElementById('diffuseR').value; 
   diffuseG = document.getElementById('diffuseG').value; 
   diffuseB = document.getElementById('diffuseB').value;
@@ -297,6 +297,8 @@ function drawAll() {
   specularG = document.getElementById('specularG').value; 
   specularB = document.getElementById('specularB').value;  
   specularRef = document.getElementById('specularRef').value; 
+
+  shinyness = document.getElementById('shinyness').value;
 
   // Clear on-screen HTML-5 <canvas> object:
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
