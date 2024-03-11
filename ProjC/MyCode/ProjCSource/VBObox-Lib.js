@@ -786,6 +786,11 @@ VBObox1.prototype.adjust = function() {
   this.MvpMatrix.concat(g_viewAll);
   this.MvpMatrix.concat(this.ModelMatrix);
 
+  //Update color values
+  this.u_Id.elements[0] = diffuseR;
+  this.u_Id.elements[1] = diffuseG;
+  this.u_Id.elements[2] = diffuseB;
+
   // this.ModelMatrix.setRotate(g_angleNow1, 0, 0, 1);	// -spin drawing axes,
 
   //  Transfer new uniforms' values to the GPU:-------------

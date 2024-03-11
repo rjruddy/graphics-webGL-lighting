@@ -135,6 +135,11 @@ g_worldMat = new Matrix4();				// Changes CVV drawing axes to 'world' axes.
 g_viewAll = new Matrix4();      // Global view matrix
 g_projAll = new Matrix4();
 
+//Global Color Values:
+var diffuseR = document.getElementById('diffuseR').value; 
+var diffuseG = document.getElementById('diffuseG').value; 
+var diffuseB = document.getElementById('diffuseB').value; 
+
 function main() {
 //=============================================================================
   // Retrieve the HTML-5 <canvas> element where webGL will draw our pictures:
@@ -279,6 +284,12 @@ function timerAll() {
 
 function drawAll() {
 //=============================================================================
+
+  //update color values
+  diffuseR = document.getElementById('diffuseR').value; 
+  diffuseG = document.getElementById('diffuseG').value; 
+  diffuseB = document.getElementById('diffuseB').value; 
+
   // Clear on-screen HTML-5 <canvas> object:
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
