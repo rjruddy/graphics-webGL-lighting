@@ -62,8 +62,13 @@
           <label for="lightY">Y</label>
           <input type="number" value="0.0" id="lightY"/>
           <label for="lightZ">Z</label>
-          <input type="number" value="5.0" id="lightZ"/>
+          <input type="number" value="2.0" id="lightZ"/>
           <button type="button" onclick="lightToggle()">Toggle light off/on</button>
+          <label for="lighting">Lighting Style:</label>
+          <select name="lighting" id="lighting">
+            <option value="0.0">Phong</option>
+            <option value="1.0">Blinn-Phong</option>
+          </select>
           <br>
         </form>
       </div>

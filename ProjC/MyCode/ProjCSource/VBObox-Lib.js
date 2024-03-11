@@ -457,8 +457,9 @@ function VBObox1() {
   uniform float u_Ka;
   uniform float u_Kd;
   uniform float u_Ks;
-
   uniform float u_Se; // Shinyness exponent
+
+  uniform float u_isBlinn; //boolean float 0=false, 1=true
 
   uniform vec3 u_V; // camera "eye" position
   uniform vec3 u_Light; // light position
@@ -471,8 +472,8 @@ function VBObox1() {
   void main() {
     vec4 transVec = u_NormalMatrix * vec4(a_Norm, 0.0);
     vec3 normVec = normalize(transVec.xyz);
-    // vec3 lightVec = vec3(0.0, 0.0, 5.0);
     gl_Position = u_MvpMatrix * a_Pos1;
+    vec3 normLight = normalize(u_Light);
 
     vec3 C = normVec * dot(normVec, u_Light);
 
@@ -481,19 +482,32 @@ function VBObox1() {
     vec3 normPosn = normalize(posnVec.xyz);
 
     vec4 tempVec = u_ModelMatrix * vec4(0.0, 0.0, 0.0, 0.0);
-
-    vec3 R = reflect(normalize(-(u_Light - normPosn)), normVec); 
-    float nDotL = max(dot(normVec, u_Light), 0.0);
-    float rDotV = max(dot(R, normEye), 0.0);
+    float nDotL = max(dot(normVec, normLight), 0.0);
     float dist = distance(u_Light, a_Pos1.xyz);
+    // float attDenom = 0.05 + 0.05*dist + 0.05*pow(dist, 2.0);
     float att = 1.0 / dist;
+    // float att = 1.0 / attDenom;
 
 
     vec3 ambient = u_Ia*u_Ka;
     vec3 diffuse = u_Id*u_Kd*att*nDotL;
-    vec3 specular = u_Is * u_Ks * att * pow(rDotV, u_Se);
+    if (u_isBlinn == 0.0) {
+      //Phong lighting case
+      vec3 R = reflect(normalize(-(u_Light - normPosn)), normVec); 
+      float rDotV = max(dot(R, normEye), 0.0);
+      vec3 specular = u_Is * u_Ks * att * pow(rDotV, u_Se);
+      v_Color = vec4(diffuse + ambient + specular, 1.0 + (0.0*tempVec.x));
+    }
+    else {
+      vec3 HNum = normLight + normEye;
+      float HDenom = length(HNum);
+      vec3 H = normalize(HNum / HDenom);
+      float hDotN = dot(H, normVec);
+      vec3 specular = u_Is * u_Ks * att * pow(hDotN, u_Se);
+      v_Color = vec4(diffuse + ambient + specular, 1.0 + (0.0*tempVec.x));
+    }
 
-    v_Color = vec4(diffuse + ambient + specular, 1.0 + (0.0*tempVec.x));
+    // v_Color = vec4(diffuse + ambient + specular, 1.0 + (0.0*tempVec.x));
    }`;
 
 //========Fragment shader program=======
@@ -561,6 +575,8 @@ function VBObox1() {
   this.u_Ks = 1.0;
   this.u_Se = shinyness;
 
+  this.u_isBlinn = isBlinn;
+
   this.u_V = new Vector3();
   this.u_Light = new Vector3([0.0, 0.0, 5.0]);
 
@@ -572,6 +588,7 @@ function VBObox1() {
   this.u_KdLoc;
   this.u_KsLoc;
   this.u_SeLoc;
+  this.u_isBlinnLoc;
 
   this.u_VLoc;
   this.u_LightLoc;
@@ -716,6 +733,12 @@ VBObox1.prototype.init = function() {
   if (!this.u_SeLoc) { 
     console.log(this.constructor.name + 
     						'.init() failed to get GPU location for u_Se uniform');
+    return;
+  }
+  this.u_isBlinnLoc = gl.getUniformLocation(this.shaderLoc, 'u_isBlinn');
+  if (!this.u_isBlinnLoc) { 
+    console.log(this.constructor.name + 
+    						'.init() failed to get GPU location for u_isBlinn uniform');
     return;
   }
 
@@ -869,8 +892,9 @@ VBObox1.prototype.adjust = function() {
   this.u_Ka = ambientRef;
   this.u_Kd = diffuseRef;
   this.u_Ks = specularRef;
-
   this.u_Se = shinyness;
+
+  this.u_isBlinn = isBlinn;
 
   this.u_V.elements[0] = eye_x;
   this.u_V.elements[1] = eye_y;
@@ -904,6 +928,7 @@ VBObox1.prototype.adjust = function() {
   gl.uniform1f(this.u_KdLoc, this.u_Kd);
   gl.uniform1f(this.u_KsLoc, this.u_Ks);
   gl.uniform1f(this.u_SeLoc, this.u_Se);
+  gl.uniform1f(this.u_isBlinnLoc, this.u_isBlinn);
 
   gl.uniform3f(this.u_VLoc, this.u_V.elements[0], this.u_V.elements[1], this.u_V.elements[2]);
   gl.uniform3f(this.u_LightLoc, this.u_Light.elements[0], this.u_Light.elements[1], this.u_Light.elements[2]);

@@ -142,6 +142,8 @@ var ambientR = document.getElementById("ambientRef").value;
 var diffuseR = document.getElementById("diffuseRef").value;
 var specularR = document.getElementById("specularRef").value;
 
+var isBlinn = 0; //0 = false, 1 = true;
+
 
 function main() {
 //=============================================================================
@@ -309,6 +311,8 @@ function drawAll() {
   lightX = document.getElementById('lightX').value;
   lightY = document.getElementById('lightY').value;
   lightZ = document.getElementById('lightZ').value;
+
+  isBlinn = document.getElementById("lighting").value;
 
   // Clear on-screen HTML-5 <canvas> object:
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
