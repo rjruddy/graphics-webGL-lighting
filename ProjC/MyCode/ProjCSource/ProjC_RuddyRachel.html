@@ -9,7 +9,7 @@
     <canvas id="webgl" width="600" height="600">
     Please use a browser that supports "canvas"
     </canvas>
-    <p>
+    <p style="margin:0px;">
       <button type="button" onclick="VBO0toggle()">VBO-0 hide/show</button>
       <button type="button" onclick="VBO1toggle()">VBO-1 hide/show</button>
       <button type="button" onclick="VBO2toggle()">VBO-2 hide/show</button>
@@ -17,52 +17,52 @@
     <div id='Controls'>
       Use WASD to change the direction in which your camera is pointing. Use the Up/Down arrow keys to move forwards and backwards and the Left/Right keys to strafe side to side.
       <div id='Sliders'>
-        <span id='ambient'>
+        <span id='ambient' style="width:60px;">
           <b>Ambient Color:</b>
           <label for="ambientR">R</label>
-          <input type="range" min="0.0" max="1.0" step="0.01" value="0.1" id="ambientR"/>
+          <input type="range" min="0.0" max="1.0" step="0.01" value="0.1" id="ambientR" style="width:60px;"/>
           <label for="ambientG">G</label>
-          <input type="range" min="0.0" max="1.0" step="0.01" value="0.0" id="ambientG"/>
+          <input type="range" min="0.0" max="1.0" step="0.01" value="0.0" id="ambientG" style="width:60px;"/>
           <label for="ambientB">B</label>
-          <input type="range" min="0.0" max="1.0" step="0.01" value="0.0" id="ambientB"/>
+          <input type="range" min="0.0" max="1.0" step="0.01" value="0.0" id="ambientB" style="width:60px;"/>
           <label for="ambientRef">Reflectance</label>
-          <input type="range" min="0.0" max="1.0" step="0.01" value="1.0" id="ambientRef"/>
+          <input type="range" min="0.0" max="1.0" step="0.01" value="1.0" id="ambientRef" style="width:60px;"/>
           <br>
         </span>
         <span id='diffuse'>
           <b>Diffuse Color:</b>
           <label for="diffuseR">R</label>
-          <input type="range" min="0.0" max="1.0" step="0.01" value="1.0" id="diffuseR"/>
+          <input type="range" min="0.0" max="1.0" step="0.01" value="1.0" id="diffuseR" style="width:60px;"/>
           <label for="diffuseG">G</label>
-          <input type="range" min="0.0" max="1.0" step="0.01" value="0.0" id="diffuseG"/>
+          <input type="range" min="0.0" max="1.0" step="0.01" value="0.0" id="diffuseG" style="width:60px;"/>
           <label for="diffuseB">B</label>
-          <input type="range" min="0.0" max="1.0" step="0.01" value="0.0" id="diffuseB"/>
+          <input type="range" min="0.0" max="1.0" step="0.01" value="0.0" id="diffuseB" style="width:60px;"/>
           <label for="diffuseRef">Reflectance</label>
-          <input type="range" min="0.0" max="1.0" step="0.01" value="1.0" id="diffuseRef"/>
+          <input type="range" min="0.0" max="1.0" step="0.01" value="1.0" id="diffuseRef" style="width:60px;"/>
           <br>
         </span>
         <span id='specular'>
           <b>Specular Color:</b>
           <label for="specularR">R</label>
-          <input type="range" min="0.0" max="1.0" step="0.01" value="1.0" id="specularR"/>
+          <input type="range" min="0.0" max="1.0" step="0.01" value="1.0" id="specularR" style="width:60px;"/>
           <label for="specularG">G</label>
-          <input type="range" min="0.0" max="1.0" step="0.01" value="1.0" id="specularG"/>
+          <input type="range" min="0.0" max="1.0" step="0.01" value="1.0" id="specularG" style="width:60px;"/>
           <label for="specularB">B</label>
-          <input type="range" min="0.0" max="1.0" step="0.01" value="1.0" id="specularB"/>
+          <input type="range" min="0.0" max="1.0" step="0.01" value="1.0" id="specularB" style="width:60px;"/>
           <label for="specularRef">Reflectance</label>
-          <input type="range" min="0.0" max="1.0" step="0.01" value="1.0" id="specularRef"/>
+          <input type="range" min="0.0" max="1.0" step="0.01" value="1.0" id="specularRef" style="width:60px;"/>
           <label for="shinyness">Shinyness</label>
-          <input type="range" min="1.0" max="128.0" step="1.0" value="10.0" id="shinyness"/>
+          <input type="range" min="1.0" max="128.0" step="1.0" value="10.0" id="shinyness" style="width:60px;"/>
           <br>
         </span>
         <form id='light'>
           <b>Set Light Position:</b>
           <label for="lightX">X</label>
-          <input type="number" value="0.0" id="lightX"/>
+          <input type="number" value="0.0" id="lightX" style="width:60px;"/>
           <label for="lightY">Y</label>
-          <input type="number" value="0.0" id="lightY"/>
+          <input type="number" value="0.0" id="lightY" style="width:60px;"/>
           <label for="lightZ">Z</label>
-          <input type="number" value="2.0" id="lightZ"/>
+          <input type="number" value="2.0" id="lightZ" style="width:60px;"/>
           <button type="button" onclick="lightToggle()">Toggle light off/on</button>
           <label for="lighting">Lighting Style:</label>
           <select name="lighting" id="lighting">

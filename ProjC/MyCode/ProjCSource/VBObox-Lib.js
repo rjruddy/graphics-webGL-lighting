@@ -477,18 +477,14 @@ function VBObox1() {
 
     vec3 C = normVec * dot(normVec, u_Light);
 
-    vec4 posnVec = u_MvpMatrix * a_Pos1;
+    vec4 posnVec = u_ModelMatrix * a_Pos1;
     vec3 normEye = normalize(u_V);
     vec3 normPosn = normalize(posnVec.xyz);
 
-    vec4 tempVec = u_ModelMatrix * vec4(0.0, 0.0, 0.0, 0.0);
     float nDotL = max(dot(normVec, normLight), 0.0);
     float dist = distance(u_Light, a_Pos1.xyz);
     float attDenom = 0.5 + 0.1*dist + 0.1*pow(dist, 2.0);
-    // float att = 1.0 / dist;
     float att = 1.0 / attDenom;
-    // float att = 1.0;
-
 
     vec3 ambient = u_Ia*u_Ka;
     vec3 diffuse = u_Id*u_Kd*att*nDotL;
@@ -498,7 +494,7 @@ function VBObox1() {
       vec3 R = reflect(normalize(-(u_Light - normPosn)), normVec); 
       float rDotV = max(dot(R, normEye), 0.0);
       vec3 specular = u_Is * u_Ks * att * pow(rDotV, u_Se);
-      v_Color = vec4(diffuse + ambient + specular, 1.0 + (0.0*tempVec.x));
+      v_Color = vec4(diffuse + ambient + specular, 1.0);
     }
     else {
       vec3 HNum = normLight + normEye;
@@ -506,10 +502,8 @@ function VBObox1() {
       vec3 H = normalize(HNum / HDenom);
       float hDotN = dot(H, normVec);
       vec3 specular = u_Is * u_Ks * att * pow(hDotN, u_Se);
-      v_Color = vec4(diffuse + ambient + specular, 1.0 + (0.0*tempVec.x));
+      v_Color = vec4(diffuse + ambient + specular, 1.0);
     }
-
-    // v_Color = vec4(diffuse + ambient + specular, 1.0 + (0.0*tempVec.x));
    }`;
 
 //========Fragment shader program=======
@@ -809,16 +803,6 @@ VBObox1.prototype.switchToMe = function () {
 		this.vboOffset_a_Pos1);						
 		              // Offset == how many bytes from START of buffer to the first
   								// value we will actually use?  (we start with position).
-  //want the color to be determined by the normals -- but what to do with negative normals?
-  // gl.vertexAttribPointer(
-  //   this.a_ColorLoc, 				// choose Vertex Shader attribute to fill with data
-  //   3, 							// how many values? 1,2,3 or 4. (we're using R,G,B)
-  //   gl.FLOAT, 			// data type for each value: usually gl.FLOAT
-  //   false, 					// did we supply fixed-point data AND it needs normalizing?
-  //   this.vboStride, 		// Stride -- how many bytes used to store each vertex?
-  //                   // (x,y,z,w, r,g,b, nx,ny,nz) * bytes/value
-  //   this.vboOffset_a_Color);			// Offset -- how many bytes from START of buffer to the
-                    // value we will actually use?  Need to skip over x,y,z,w
   gl.vertexAttribPointer(this.a_NormLoc, this.vboFcount_a_Norm,
                          gl.FLOAT, false, 
   						           this.vboStride,  this.vboOffset_a_Norm);
@@ -868,12 +852,12 @@ VBObox1.prototype.adjust = function() {
   this.ModelMatrix.rotate(g_angleNow1, 0, 0, 1);
 
   // pushMatrix(this.ModelMatrix);
-  //   this.ModelMatrix.translate(0, 0, 0.1);
+  //   this.ModelMatrix.translate(5, 5, 0.1);
   //   this.ModelMatrix.rotate(g_angleNow1, 0, 0, 1);
   // this.ModelMatrix = popMatrix();
 
   //Set normal matrix as transpost of model:
-  this.NormalMatrix = this.ModelMatrix.transpose()
+  this.NormalMatrix = this.ModelMatrix.transpose();
 
   //Setting the contents of the MVP matrix using P * V * M
   this.MvpMatrix.set(g_projAll);
@@ -945,15 +929,16 @@ VBObox1.prototype.draw = function() {
         console.log('ERROR! before' + this.constructor.name + 
   						'.draw() call you needed to call this.switchToMe()!!');
   }
+
+  // pushMatrix(this.ModelMatrix);
+  //   this.ModelMatrix.translate(5, 5, 0.1);
+  //   this.ModelMatrix.rotate(g_angleNow1, 0, 0, 1);
+  // this.ModelMatrix = popMatrix();
   
   // ----------------------------Draw the contents of the currently-bound VBO:
   // this.ModelMatrix.set(g_projAll).multiply(g_viewAll);
     // ----------------------------Draw the contents of the currently-bound VBO:
-  gl.drawArrays(gl.TRIANGLES,		    // select the drawing primitive to draw:
-    // choices: gl.POINTS, gl.LINES, gl.LINE_STRIP, gl.LINE_LOOP, 
-    //          gl.TRIANGLES, gl.TRIANGLE_STRIP,
-  0, 								// location of 1st vertex to draw;
-  this.vboVerts);		// number of vertices to draw on-screen.
+  gl.drawArrays(gl.TRIANGLES, 0, this.vboVerts);
 
 }
 
@@ -1452,9 +1437,3 @@ function drawAxes() {
   // gl.uniformMatrix4fv(this.u_ModelMatLoc,	false, this.ModelMat.elements);
 	gl.drawArrays(gl.LINES, gndVerts.length / 7, myAxes.length / 7);
 }
-
-// Other Shapes:
-// function drawSphere() {
-//   gl.drawArrays(gl.TRIANGLES, mySphere.length / 7, 0)
-// }
-
