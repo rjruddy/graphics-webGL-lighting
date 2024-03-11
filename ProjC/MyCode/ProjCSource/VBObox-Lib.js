@@ -451,12 +451,12 @@ function VBObox1() {
   //Ambient, Diffuse, Specular illumination colors: 
   uniform vec3 u_Ia;
   uniform vec3 u_Id;
-  // uniform vec3 u_Is;
+  uniform vec3 u_Is;
 
   //Ambient, Diffuse, Specular Reflection coefficients: 
   uniform float u_Ka;
   uniform float u_Kd;
-  // uniform float u_Ks;
+  uniform float u_Ks;
 
   uniform vec3 u_V; // camera "eye" position
 
@@ -472,16 +472,18 @@ function VBObox1() {
     vec3 lightVec = vec3(0.0, 0.0, 1.0);
     gl_Position = u_MvpMatrix * a_Pos1;
 
+    vec3 R = reflect(-lightVec, normVec);
+    float Se = 20.0;
       // vec3 C = N * nDotL
       // vec3 R = 2*normVec - lightVec
     float nDotL = max(dot(normVec, lightVec), 0.0);
+    float rDotV = max(dot(R, u_V), 0.0);
     vec3 ambient = u_Ia*u_Ka;
     vec3 diffuse = u_Id*u_Kd*nDotL;
-    // vec3 specular = u_Is*u_Ks;
-    vec3 specular2 = reflect(-lightVec, normVec);
+    vec3 specular = u_Is*u_Ks*pow(rDotV, Se);
 
     //TESTING VARIABLE - removes errors from "unused" GLSL unforms/attributes.
-    vec3 tColor = a_Color * nDotL * u_Id * u_Ia * u_Kd * u_Ka * u_V;
+    vec3 tColor = a_Color * nDotL * u_Id * u_Ia * u_Kd * u_Ka * specular;
      
     v_Color = vec4(diffuse + ambient, 1.0 + (tColor.z * 0.0));
 
@@ -552,17 +554,20 @@ function VBObox1() {
   this.NormalMatrix = new Matrix4();
   this.u_Ia = new Vector3([1.0, 0.0, 0.0]); //RED
   this.u_Id = new Vector3([0.0, 1.0, 0.0]); //GREEN
-  //this.u_Is = new Vector3([0.0, 0.0, 1.0]); //BLUE
+  this.u_Is = new Vector3([0.0, 0.0, 1.0]); //BLUE
   this.u_Ka = 1.0;
   this.u_Kd = 1.0;
+  this.u_Ks = 1.0;
 
   this.u_V = new Vector3();
 
 	this.u_ModelMatrixLoc;						// GPU location for u_ModelMat uniform
   this.u_IaLoc;                     // GPU location for Ia uniform
   this.u_IdLoc;                     // GPU location for Id uniform
+  this.u_IsLoc;
   this.u_KaLoc;
   this.u_KdLoc;
+  this.u_KsLoc;
 
   this.u_VLoc;
 };
@@ -678,12 +683,12 @@ VBObox1.prototype.init = function() {
     						'.init() failed to get GPU location for u_Id uniform');
     return;
   }
-  // this.u_IsLoc = gl.getUniformLocation(this.shaderLoc, 'u_Is');
-  // if (!this.u_IsLoc) { 
-  //   console.log(this.constructor.name + 
-  //   						'.init() failed to get GPU location for u_Is uniform');
-  //   return;
-  // }
+  this.u_IsLoc = gl.getUniformLocation(this.shaderLoc, 'u_Is');
+  if (!this.u_IsLoc) { 
+    console.log(this.constructor.name + 
+    						'.init() failed to get GPU location for u_Is uniform');
+    return;
+  }
   this.u_KaLoc = gl.getUniformLocation(this.shaderLoc, 'u_Ka');
   if (!this.u_KaLoc) { 
     console.log(this.constructor.name + 
@@ -696,12 +701,12 @@ VBObox1.prototype.init = function() {
     						'.init() failed to get GPU location for u_Kd uniform');
     return;
   }
-  // this.u_KsLoc = gl.getUniformLocation(this.shaderLoc, 'u_Ks');
-  // if (!this.u_KsLoc) { 
-  //   console.log(this.constructor.name + 
-  //   						'.init() failed to get GPU location for u_Ks uniform');
-  //   return;
-  // }
+  this.u_KsLoc = gl.getUniformLocation(this.shaderLoc, 'u_Ks');
+  if (!this.u_KsLoc) { 
+    console.log(this.constructor.name + 
+    						'.init() failed to get GPU location for u_Ks uniform');
+    return;
+  }
 
   this.u_VLoc = gl.getUniformLocation(this.shaderLoc, 'u_V');
   if (!this.u_VLoc) { 
@@ -836,6 +841,13 @@ VBObox1.prototype.adjust = function() {
   this.u_Id.elements[0] = diffuseR;
   this.u_Id.elements[1] = diffuseG;
   this.u_Id.elements[2] = diffuseB;
+  this.u_Is.elements[0] = specularR;
+  this.u_Is.elements[1] = specularG;
+  this.u_Is.elements[2] = specularB;
+
+  this.u_Ka = ambientRef;
+  this.u_Kd = diffuseRef;
+  this.u_Ks = specularRef;
 
   this.u_V.elements[0] = eye_x;
   this.u_V.elements[1] = eye_y;
@@ -860,10 +872,10 @@ VBObox1.prototype.adjust = function() {
   // PASS IN ILLUMINATION COLOR VALUES
   gl.uniform3f(this.u_IdLoc, this.u_Id.elements[0], this.u_Id.elements[1], this.u_Id.elements[2]);
   gl.uniform3f(this.u_IaLoc, this.u_Ia.elements[0], this.u_Ia.elements[1], this.u_Ia.elements[2]);
-  // gl.uniform3f(this.u_IsLoc, this.u_Is.elements[0], this.u_Is.elements[1], this.u_Is.elements[2]);
+  gl.uniform3f(this.u_IsLoc, this.u_Is.elements[0], this.u_Is.elements[1], this.u_Is.elements[2]);
   gl.uniform1f(this.u_KaLoc, this.u_Ka);
   gl.uniform1f(this.u_KdLoc, this.u_Kd);
-  // gl.uniform1f(this.u_KsLoc, this.u_Ks);
+  gl.uniform1f(this.u_KsLoc, this.u_Ks);
 
   gl.uniform3f(this.u_VLoc, this.u_V.elements[0], this.u_V.elements[1], this.u_V.elements[2]);
 }

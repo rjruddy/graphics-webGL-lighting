@@ -136,9 +136,6 @@ g_viewAll = new Matrix4();      // Global view matrix
 g_projAll = new Matrix4();
 
 //Global Color Values:
-var diffuseR = document.getElementById('diffuseR').value; 
-var diffuseG = document.getElementById('diffuseG').value; 
-var diffuseB = document.getElementById('diffuseB').value; 
 
 function main() {
 //=============================================================================
@@ -286,12 +283,20 @@ function drawAll() {
 //=============================================================================
 
   //update color values
-  diffuseR = document.getElementById('diffuseR').value; 
-  diffuseG = document.getElementById('diffuseG').value; 
-  diffuseB = document.getElementById('diffuseB').value; 
   ambientR = document.getElementById('ambientR').value; 
   ambientG = document.getElementById('ambientG').value; 
   ambientB = document.getElementById('ambientB').value; 
+  ambientRef = document.getElementById('ambientRef').value; 
+  
+  diffuseR = document.getElementById('diffuseR').value; 
+  diffuseG = document.getElementById('diffuseG').value; 
+  diffuseB = document.getElementById('diffuseB').value;
+  diffuseRef = document.getElementById('diffuseRef').value;  
+
+  specularR = document.getElementById('specularR').value; 
+  specularG = document.getElementById('specularG').value; 
+  specularB = document.getElementById('specularB').value;  
+  specularRef = document.getElementById('specularRef').value; 
 
   // Clear on-screen HTML-5 <canvas> object:
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);

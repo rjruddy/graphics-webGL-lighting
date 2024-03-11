@@ -17,6 +17,18 @@
     <div id='Controls'>
       Use WASD to change the direction in which your camera is pointing. Use the Up/Down arrow keys to move forwards and backwards and the Left/Right keys to strafe side to side.
       <div id='Sliders'>
+        <span id='ambient'>
+          <b>Ambient Color:</b>
+          <label for="ambientR">R</label>
+          <input type="range" min="0.0" max="1.0" step="0.01" value="0.1" id="ambientR"/>
+          <label for="ambientG">G</label>
+          <input type="range" min="0.0" max="1.0" step="0.01" value="0.0" id="ambientG"/>
+          <label for="ambientB">B</label>
+          <input type="range" min="0.0" max="1.0" step="0.01" value="0.0" id="ambientB"/>
+          <label for="ambientRef">Reflectance</label>
+          <input type="range" min="0.0" max="1.0" step="0.01" value="1.0" id="ambientRef"/>
+          <br>
+        </span>
         <span id='diffuse'>
           <b>Diffuse Color:</b>
           <label for="diffuseR">R</label>
@@ -25,6 +37,8 @@
           <input type="range" min="0.0" max="1.0" step="0.01" value="0.0" id="diffuseG"/>
           <label for="diffuseB">B</label>
           <input type="range" min="0.0" max="1.0" step="0.01" value="0.0" id="diffuseB"/>
+          <label for="diffuseRef">Reflectance</label>
+          <input type="range" min="0.0" max="1.0" step="0.01" value="1.0" id="diffuseRef"/>
           <br>
         </span>
         <span id='specular'>
@@ -35,16 +49,8 @@
           <input type="range" min="0.0" max="1.0" step="0.01" value="0.0" id="specularG"/>
           <label for="specularB">B</label>
           <input type="range" min="0.0" max="1.0" step="0.01" value="0.0" id="specularB"/>
-          <br>
-        </span>
-        <span id='ambient'>
-          <b>Ambient Color:</b>
-          <label for="ambientR">R</label>
-          <input type="range" min="0.0" max="1.0" step="0.01" value="0.1" id="ambientR"/>
-          <label for="ambientG">G</label>
-          <input type="range" min="0.0" max="1.0" step="0.01" value="0.0" id="ambientG"/>
-          <label for="ambientB">B</label>
-          <input type="range" min="0.0" max="1.0" step="0.01" value="0.0" id="ambientB"/>
+          <label for="specularRef">Reflectance</label>
+          <input type="range" min="0.0" max="1.0" step="0.01" value="1.0" id="specularRef"/>
           <br>
         </span>
       </div>
