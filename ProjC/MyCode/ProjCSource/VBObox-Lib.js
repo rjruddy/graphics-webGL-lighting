@@ -448,12 +448,18 @@ function VBObox1() {
   uniform mat4 u_MvpMatrix;
   uniform mat4 u_NormalMatrix;
 
-  // uniform vec3 Ia;
-  // uniform vec3 Id;
-  // uniform vec3 Is;
+  //Ambient, Diffuse, Specular illumination colors: 
+  // uniform vec3 u_Ia;
+  uniform vec3 u_Id;
+  // uniform vec3 u_Is;
+
+  //Ambient, Diffuse, Specular Reflection coefficients: 
+  // uniform float u_Ka;
+  // uniform float u_Kd;
+  // uniform float u_Ks;
 
   attribute vec4 a_Pos1;
-  // attribute vec3 a_Color;
+  attribute vec3 a_Color;
   attribute vec3 a_Norm;
   varying vec4 v_Color;
 
@@ -463,13 +469,24 @@ function VBObox1() {
     vec3 normVec = normalize(transVec.xyz);
     vec3 lightVec = vec3(0.0, 0.0, 1.0);
     gl_Position = u_MvpMatrix * a_Pos1;
-      // float NdotL = dot(normVec,lightVec);
+
+      // vec3 C = N * NdotL
+      // vec3 R = 2*normVec - lightVec
+    // float nDotL = max(dot(normVec,lightVec), 0.0);
+    float nDotL = max(dot(normVec, lightVec), 0.0);
       // float ambient = Ia*Ka;
       // float diffuse = Id*Kd*NdotL;
       // float specular = Is*Ks;
-      // v_Color = vec4(a_Color*dot(normVec,lightVec), 1.0); 
-      // v_Color = vec4(1.0, 0.0, 0.0, 1.0);
-    v_Color = vec4(a_Norm.xyz, 1.0);
+    // vec4 futColor = vec4((a_Color * nDotL * u_Id) + vec3(1.0, 1.0, 1.0), 1.0)
+    vec3 tColor = a_Color * nDotL * u_Id;
+     
+    v_Color = vec4(nDotL * u_Id, 1.0 + (tColor.z * 0.0));
+
+    //TEST v_Color valuues
+    // v_Color = vec4(u_Id, 1.0 + (futColor.z * 0.0));
+    // v_Color = vec4(normVec + vec3(1.0, 1.0, 1.0) / 2.0, 1.0 + (tColor.z * 0.0)); //this actually makes color! not the right color tho.
+    // v_Color = vec4(1.0, 0.0, 0.0, 1.0);
+    // v_Color = vec4(a_Norm.xyz, 1.0);
    }`;
 
 //========Fragment shader program=======
@@ -477,8 +494,8 @@ function VBObox1() {
  `precision mediump float;
   varying vec4 v_Color;
   void main() {
-    // gl_FragColor = v_Color;
-    gl_FragColor = vec4(v_Color.z, v_Color.z, v_Color.z, 1.0);
+    gl_FragColor = v_Color;
+    // gl_FragColor = vec4(v_Color.z, v_Color.z, v_Color.z, 1.0);
   }`;
 
 
@@ -531,7 +548,11 @@ function VBObox1() {
 	this.ModelMatrix = new Matrix4();	// Transforms CVV axes to model axes.
   this.MvpMatrix = new Matrix4();
   this.NormalMatrix = new Matrix4();
+  this.u_Ia = new Vector3([1.0, 0.0, 0.0]); //RED
+  this.u_Id = new Vector3([0.0, 1.0, 0.0]); //GREEN
 	this.u_ModelMatrixLoc;						// GPU location for u_ModelMat uniform
+  this.u_IaLoc;                     // GPU location for Ia uniform
+  this.u_IdLoc;                     // GPU location for Id uniform
 };
 
 
@@ -601,12 +622,12 @@ VBObox1.prototype.init = function() {
     						'.init() Failed to get GPU location of attribute a_Pos1');
     return -1;	// error exit.
   }
-  // this.a_ColorLoc = gl.getAttribLocation(this.shaderLoc, 'a_Color');
-  // if(this.a_ColorLoc < 0) {
-  //   console.log(this.constructor.name + 
-  //   						'.init() failed to get the GPU location of attribute a_Color');
-  //   return -1;	// error exit.
-  // }
+  this.a_ColorLoc = gl.getAttribLocation(this.shaderLoc, 'a_Color');
+  if(this.a_ColorLoc < 0) {
+    console.log(this.constructor.name + 
+    						'.init() failed to get the GPU location of attribute a_Color');
+    return -1;	// error exit.
+  }
  	this.a_NormLoc = gl.getAttribLocation(this.shaderLoc, 'a_Norm');
   if(this.a_NormLoc < 0) {
     console.log(this.constructor.name + 
@@ -631,6 +652,18 @@ VBObox1.prototype.init = function() {
   if (!this.u_NormalMatrixLoc) { 
     console.log(this.constructor.name + 
     						'.init() failed to get GPU location for u_NormalMatrix uniform');
+    return;
+  }
+  // this.u_IaLoc = gl.getUniformLocation(this.shaderLoc, 'u_Ia');
+  // if (!this.u_IaLoc) { 
+  //   console.log(this.constructor.name + 
+  //   						'.init() failed to get GPU location for u_Ia uniform');
+  //   return;
+  // }
+  this.u_IdLoc = gl.getUniformLocation(this.shaderLoc, 'u_Id');
+  if (!this.u_IdLoc) { 
+    console.log(this.constructor.name + 
+    						'.init() failed to get GPU location for u_Id uniform');
     return;
   }
 }
@@ -683,21 +716,21 @@ VBObox1.prototype.switchToMe = function () {
 		              // Offset == how many bytes from START of buffer to the first
   								// value we will actually use?  (we start with position).
   //want the color to be determined by the normals -- but what to do with negative normals?
-  // gl.vertexAttribPointer(
-  //   this.a_ColorLoc, 				// choose Vertex Shader attribute to fill with data
-  //   3, 							// how many values? 1,2,3 or 4. (we're using R,G,B)
-  //   gl.FLOAT, 			// data type for each value: usually gl.FLOAT
-  //   false, 					// did we supply fixed-point data AND it needs normalizing?
-  //   this.vboStride, 		// Stride -- how many bytes used to store each vertex?
-  //                   // (x,y,z,w, r,g,b, nx,ny,nz) * bytes/value
-  //   this.vboOffset_a_Color);			// Offset -- how many bytes from START of buffer to the
+  gl.vertexAttribPointer(
+    this.a_ColorLoc, 				// choose Vertex Shader attribute to fill with data
+    3, 							// how many values? 1,2,3 or 4. (we're using R,G,B)
+    gl.FLOAT, 			// data type for each value: usually gl.FLOAT
+    false, 					// did we supply fixed-point data AND it needs normalizing?
+    this.vboStride, 		// Stride -- how many bytes used to store each vertex?
+                    // (x,y,z,w, r,g,b, nx,ny,nz) * bytes/value
+    this.vboOffset_a_Color);			// Offset -- how many bytes from START of buffer to the
                     // value we will actually use?  Need to skip over x,y,z,w
   gl.vertexAttribPointer(this.a_NormLoc, this.vboFcount_a_Norm,
                          gl.FLOAT, false, 
   						           this.vboStride,  this.vboOffset_a_Norm);
   //-- Enable this assignment of the attribute to its' VBO source:
   gl.enableVertexAttribArray(this.a_Pos1Loc);
-  // gl.enableVertexAttribArray(this.a_ColorLoc);
+  gl.enableVertexAttribArray(this.a_ColorLoc);
   gl.enableVertexAttribArray(this.a_NormLoc);
 }
 
@@ -745,6 +778,9 @@ VBObox1.prototype.adjust = function() {
   //   this.ModelMatrix.rotate(g_angleNow1, 0, 0, 1);
   // this.ModelMatrix = popMatrix();
 
+  //Set normal matrix as transpost of model:
+  this.NormalMatrix = this.ModelMatrix.transpose()
+
   //Setting the contents of the MVP matrix using P * V * M
   this.MvpMatrix.set(g_projAll);
   this.MvpMatrix.concat(g_viewAll);
@@ -760,9 +796,13 @@ VBObox1.prototype.adjust = function() {
   gl.uniformMatrix4fv(this.u_MvpMatrixLoc,	
                       false, 										
                       this.MvpMatrix.elements);	
-  // gl.uniformMatrix4fv(this.u_NormalMatrixLoc,	
-  //                     false, 										
-  //                     this.NormalMatrix.elements);	
+  // console.log("about to transfer u_Ia value to the GPU")
+  // gl.uniform3f(this.u_IaLoc, this.u_Ia.x, this.u_Ia.y, this.u_Ia.z);
+  // console.log("u_Id by x, y, z: ", this.u_Id.elements[0], this.u_Id.elements[1], this.u_Id.elements[2]);
+  gl.uniform3f(this.u_IdLoc, this.u_Id.elements[0], this.u_Id.elements[1], this.u_Id.elements[2]);
+  gl.uniformMatrix4fv(this.u_NormalMatrixLoc,	
+                      false, 										
+                      this.NormalMatrix.elements);	
 }
 
 VBObox1.prototype.draw = function() {
