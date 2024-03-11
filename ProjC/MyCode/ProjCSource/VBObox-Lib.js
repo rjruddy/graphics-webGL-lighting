@@ -458,6 +458,8 @@ function VBObox1() {
   uniform float u_Kd;
   // uniform float u_Ks;
 
+  uniform vec3 u_V; // camera "eye" position
+
   attribute vec4 a_Pos1;
   attribute vec3 a_Color;
   attribute vec3 a_Norm;
@@ -476,9 +478,10 @@ function VBObox1() {
     vec3 ambient = u_Ia*u_Ka;
     vec3 diffuse = u_Id*u_Kd*nDotL;
     // vec3 specular = u_Is*u_Ks;
+    vec3 specular2 = reflect(-lightVec, normVec);
 
     //TESTING VARIABLE - removes errors from "unused" GLSL unforms/attributes.
-    vec3 tColor = a_Color * nDotL * u_Id * u_Ia * u_Kd * u_Ka;
+    vec3 tColor = a_Color * nDotL * u_Id * u_Ia * u_Kd * u_Ka * u_V;
      
     v_Color = vec4(diffuse + ambient, 1.0 + (tColor.z * 0.0));
 
@@ -553,11 +556,15 @@ function VBObox1() {
   this.u_Ka = 1.0;
   this.u_Kd = 1.0;
 
+  this.u_V = new Vector3();
+
 	this.u_ModelMatrixLoc;						// GPU location for u_ModelMat uniform
   this.u_IaLoc;                     // GPU location for Ia uniform
   this.u_IdLoc;                     // GPU location for Id uniform
   this.u_KaLoc;
   this.u_KdLoc;
+
+  this.u_VLoc;
 };
 
 
@@ -695,6 +702,13 @@ VBObox1.prototype.init = function() {
   //   						'.init() failed to get GPU location for u_Ks uniform');
   //   return;
   // }
+
+  this.u_VLoc = gl.getUniformLocation(this.shaderLoc, 'u_V');
+  if (!this.u_VLoc) { 
+    console.log(this.constructor.name + 
+    						'.init() failed to get GPU location for u_V uniform');
+    return;
+  }
 }
 
 VBObox1.prototype.switchToMe = function () {
@@ -823,6 +837,10 @@ VBObox1.prototype.adjust = function() {
   this.u_Id.elements[1] = diffuseG;
   this.u_Id.elements[2] = diffuseB;
 
+  this.u_V.elements[0] = eye_x;
+  this.u_V.elements[1] = eye_y;
+  this.u_V.elements[2] = eye_z;
+
   // this.ModelMatrix.setRotate(g_angleNow1, 0, 0, 1);	// -spin drawing axes,
 
   //  Transfer new uniforms' values to the GPU:-------------
@@ -846,6 +864,8 @@ VBObox1.prototype.adjust = function() {
   gl.uniform1f(this.u_KaLoc, this.u_Ka);
   gl.uniform1f(this.u_KdLoc, this.u_Kd);
   // gl.uniform1f(this.u_KsLoc, this.u_Ks);
+
+  gl.uniform3f(this.u_VLoc, this.u_V.elements[0], this.u_V.elements[1], this.u_V.elements[2]);
 }
 
 VBObox1.prototype.draw = function() {
