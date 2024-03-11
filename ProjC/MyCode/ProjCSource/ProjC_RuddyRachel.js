@@ -289,6 +289,9 @@ function drawAll() {
   diffuseR = document.getElementById('diffuseR').value; 
   diffuseG = document.getElementById('diffuseG').value; 
   diffuseB = document.getElementById('diffuseB').value; 
+  ambientR = document.getElementById('ambientR').value; 
+  ambientG = document.getElementById('ambientG').value; 
+  ambientB = document.getElementById('ambientB').value; 
 
   // Clear on-screen HTML-5 <canvas> object:
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);

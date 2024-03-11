@@ -449,13 +449,13 @@ function VBObox1() {
   uniform mat4 u_NormalMatrix;
 
   //Ambient, Diffuse, Specular illumination colors: 
-  // uniform vec3 u_Ia;
+  uniform vec3 u_Ia;
   uniform vec3 u_Id;
   // uniform vec3 u_Is;
 
   //Ambient, Diffuse, Specular Reflection coefficients: 
-  // uniform float u_Ka;
-  // uniform float u_Kd;
+  uniform float u_Ka;
+  uniform float u_Kd;
   // uniform float u_Ks;
 
   attribute vec4 a_Pos1;
@@ -470,20 +470,19 @@ function VBObox1() {
     vec3 lightVec = vec3(0.0, 0.0, 1.0);
     gl_Position = u_MvpMatrix * a_Pos1;
 
-      // vec3 C = N * NdotL
+      // vec3 C = N * nDotL
       // vec3 R = 2*normVec - lightVec
-    // float nDotL = max(dot(normVec,lightVec), 0.0);
     float nDotL = max(dot(normVec, lightVec), 0.0);
-      // float ambient = Ia*Ka;
-      // float diffuse = Id*Kd*NdotL;
-      // float specular = Is*Ks;
-    // vec4 futColor = vec4((a_Color * nDotL * u_Id) + vec3(1.0, 1.0, 1.0), 1.0)
-    vec3 tColor = a_Color * nDotL * u_Id;
+    vec3 ambient = u_Ia*u_Ka;
+    vec3 diffuse = u_Id*u_Kd*nDotL;
+    // vec3 specular = u_Is*u_Ks;
+
+    //TESTING VARIABLE - removes errors from "unused" GLSL unforms/attributes.
+    vec3 tColor = a_Color * nDotL * u_Id * u_Ia * u_Kd * u_Ka;
      
-    v_Color = vec4(nDotL * u_Id, 1.0 + (tColor.z * 0.0));
+    v_Color = vec4(diffuse + ambient, 1.0 + (tColor.z * 0.0));
 
     //TEST v_Color valuues
-    // v_Color = vec4(u_Id, 1.0 + (futColor.z * 0.0));
     // v_Color = vec4(normVec + vec3(1.0, 1.0, 1.0) / 2.0, 1.0 + (tColor.z * 0.0)); //this actually makes color! not the right color tho.
     // v_Color = vec4(1.0, 0.0, 0.0, 1.0);
     // v_Color = vec4(a_Norm.xyz, 1.0);
@@ -550,9 +549,15 @@ function VBObox1() {
   this.NormalMatrix = new Matrix4();
   this.u_Ia = new Vector3([1.0, 0.0, 0.0]); //RED
   this.u_Id = new Vector3([0.0, 1.0, 0.0]); //GREEN
+  //this.u_Is = new Vector3([0.0, 0.0, 1.0]); //BLUE
+  this.u_Ka = 1.0;
+  this.u_Kd = 1.0;
+
 	this.u_ModelMatrixLoc;						// GPU location for u_ModelMat uniform
   this.u_IaLoc;                     // GPU location for Ia uniform
   this.u_IdLoc;                     // GPU location for Id uniform
+  this.u_KaLoc;
+  this.u_KdLoc;
 };
 
 
@@ -654,18 +659,42 @@ VBObox1.prototype.init = function() {
     						'.init() failed to get GPU location for u_NormalMatrix uniform');
     return;
   }
-  // this.u_IaLoc = gl.getUniformLocation(this.shaderLoc, 'u_Ia');
-  // if (!this.u_IaLoc) { 
-  //   console.log(this.constructor.name + 
-  //   						'.init() failed to get GPU location for u_Ia uniform');
-  //   return;
-  // }
+  this.u_IaLoc = gl.getUniformLocation(this.shaderLoc, 'u_Ia');
+  if (!this.u_IaLoc) { 
+    console.log(this.constructor.name + 
+    						'.init() failed to get GPU location for u_Ia uniform');
+    return;
+  }
   this.u_IdLoc = gl.getUniformLocation(this.shaderLoc, 'u_Id');
   if (!this.u_IdLoc) { 
     console.log(this.constructor.name + 
     						'.init() failed to get GPU location for u_Id uniform');
     return;
   }
+  // this.u_IsLoc = gl.getUniformLocation(this.shaderLoc, 'u_Is');
+  // if (!this.u_IsLoc) { 
+  //   console.log(this.constructor.name + 
+  //   						'.init() failed to get GPU location for u_Is uniform');
+  //   return;
+  // }
+  this.u_KaLoc = gl.getUniformLocation(this.shaderLoc, 'u_Ka');
+  if (!this.u_KaLoc) { 
+    console.log(this.constructor.name + 
+    						'.init() failed to get GPU location for u_Ka uniform');
+    return;
+  }
+  this.u_KdLoc = gl.getUniformLocation(this.shaderLoc, 'u_Kd');
+  if (!this.u_KdLoc) { 
+    console.log(this.constructor.name + 
+    						'.init() failed to get GPU location for u_Kd uniform');
+    return;
+  }
+  // this.u_KsLoc = gl.getUniformLocation(this.shaderLoc, 'u_Ks');
+  // if (!this.u_KsLoc) { 
+  //   console.log(this.constructor.name + 
+  //   						'.init() failed to get GPU location for u_Ks uniform');
+  //   return;
+  // }
 }
 
 VBObox1.prototype.switchToMe = function () {
@@ -787,6 +816,9 @@ VBObox1.prototype.adjust = function() {
   this.MvpMatrix.concat(this.ModelMatrix);
 
   //Update color values
+  this.u_Ia.elements[0] = ambientR;
+  this.u_Ia.elements[1] = ambientG;
+  this.u_Ia.elements[2] = ambientB;
   this.u_Id.elements[0] = diffuseR;
   this.u_Id.elements[1] = diffuseG;
   this.u_Id.elements[2] = diffuseB;
@@ -801,13 +833,19 @@ VBObox1.prototype.adjust = function() {
   gl.uniformMatrix4fv(this.u_MvpMatrixLoc,	
                       false, 										
                       this.MvpMatrix.elements);	
-  // console.log("about to transfer u_Ia value to the GPU")
-  // gl.uniform3f(this.u_IaLoc, this.u_Ia.x, this.u_Ia.y, this.u_Ia.z);
-  // console.log("u_Id by x, y, z: ", this.u_Id.elements[0], this.u_Id.elements[1], this.u_Id.elements[2]);
-  gl.uniform3f(this.u_IdLoc, this.u_Id.elements[0], this.u_Id.elements[1], this.u_Id.elements[2]);
   gl.uniformMatrix4fv(this.u_NormalMatrixLoc,	
                       false, 										
                       this.NormalMatrix.elements);	
+  // console.log("about to transfer u_Ia value to the GPU")
+  // gl.uniform3f(this.u_IaLoc, this.u_Ia.x, this.u_Ia.y, this.u_Ia.z);
+  // console.log("u_Id by x, y, z: ", this.u_Id.elements[0], this.u_Id.elements[1], this.u_Id.elements[2]);
+  // PASS IN ILLUMINATION COLOR VALUES
+  gl.uniform3f(this.u_IdLoc, this.u_Id.elements[0], this.u_Id.elements[1], this.u_Id.elements[2]);
+  gl.uniform3f(this.u_IaLoc, this.u_Ia.elements[0], this.u_Ia.elements[1], this.u_Ia.elements[2]);
+  // gl.uniform3f(this.u_IsLoc, this.u_Is.elements[0], this.u_Is.elements[1], this.u_Is.elements[2]);
+  gl.uniform1f(this.u_KaLoc, this.u_Ka);
+  gl.uniform1f(this.u_KdLoc, this.u_Kd);
+  // gl.uniform1f(this.u_KsLoc, this.u_Ks);
 }
 
 VBObox1.prototype.draw = function() {
