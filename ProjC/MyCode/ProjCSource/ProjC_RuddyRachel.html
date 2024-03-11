@@ -55,6 +55,17 @@
           <input type="range" min="1.0" max="128.0" step="1.0" value="1.0" id="shinyness"/>
           <br>
         </span>
+        <span id='light'>
+          <b>Set Light Position:</b>
+          <label for="lightX">X</label>
+          <input type="input" value="0.0" id="lightX"/>
+          <label for="lightY">Y</label>
+          <input type="input" value="0.0" id="lightY"/>
+          <label for="lightZ">Z</label>
+          <input type="input" value="0.0" id="lightZ"/>
+          <button type="button" onclick="lightToggle()">Toggle light off/on</button>
+          <br>
+        </span>
       </div>
     </div> 
     <script src="lib/webgl-utils.js"></script>

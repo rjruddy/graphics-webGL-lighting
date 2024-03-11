@@ -130,12 +130,17 @@ var aim_z = tilt;
 var g_show0 = 1;								// 0==Show, 1==Hide VBO0 contents on-screen.
 var g_show1 = 1;								// 	"					"			VBO1		"				"				" 
 var g_show2 = 0;                //  "         "     VBO2    "       "       "
+var light_show = 1; //1==On, 0==Off -- light toggle 
+
 
 g_worldMat = new Matrix4();				// Changes CVV drawing axes to 'world' axes.
 g_viewAll = new Matrix4();      // Global view matrix
 g_projAll = new Matrix4();
 
-//Global Color Values:
+//Global Color Values (stored when light is turned off)
+var ambientR = document.getElementById("ambientRef").value;
+var diffuseR = document.getElementById("diffuseRef").value;
+var specularR = document.getElementById("specularRef").value;
 
 function main() {
 //=============================================================================
@@ -378,6 +383,35 @@ function drawResize() {
     //                     200);  // camera z-far distance (always positive; frustum ends at z = -zfar)
 		// IMPORTANT!  Need a fresh drawing in the re-sized viewports.
 		drawAll();				// draw in all viewports.
+}
+
+function lightToggle() {
+  if(light_show != 0) {
+    light_show = 0;	
+    //store prior reflectance settings
+    ambientR = document.getElementById('ambientRef').value;
+    diffuseR = document.getElementById('diffuseRef').value;
+    specularR = document.getElementById('specularRef').value;
+
+    //set all reflectance to zero
+    document.getElementById('ambientRef').value = 0.0;
+    document.getElementById('diffuseRef').value = 0.0;
+    document.getElementById('specularRef').value = 0.0;
+    diffuseRef = 0.0;
+    ambientRef = 0.0;
+    specularRef = 0.0;
+
+  } else {
+
+    light_show = 1;
+    //replace reflectance values with stored values
+    diffuseRef = diffuseR;
+    specularRef = specularR;
+    ambientRef = ambientR;
+    document.getElementById('ambientRef').value = ambientR;
+    document.getElementById('diffuseRef').value = diffuseR;
+    document.getElementById('specularRef').value = specularR;
+  }
 }
 
 function VBO0toggle() {
