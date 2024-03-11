@@ -484,13 +484,15 @@ function VBObox1() {
     vec4 tempVec = u_ModelMatrix * vec4(0.0, 0.0, 0.0, 0.0);
     float nDotL = max(dot(normVec, normLight), 0.0);
     float dist = distance(u_Light, a_Pos1.xyz);
-    // float attDenom = 0.05 + 0.05*dist + 0.05*pow(dist, 2.0);
-    float att = 1.0 / dist;
-    // float att = 1.0 / attDenom;
+    float attDenom = 0.5 + 0.1*dist + 0.1*pow(dist, 2.0);
+    // float att = 1.0 / dist;
+    float att = 1.0 / attDenom;
+    // float att = 1.0;
 
 
     vec3 ambient = u_Ia*u_Ka;
     vec3 diffuse = u_Id*u_Kd*att*nDotL;
+
     if (u_isBlinn == 0.0) {
       //Phong lighting case
       vec3 R = reflect(normalize(-(u_Light - normPosn)), normVec); 
