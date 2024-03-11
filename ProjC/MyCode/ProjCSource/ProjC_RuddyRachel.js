@@ -142,6 +142,7 @@ var ambientR = document.getElementById("ambientRef").value;
 var diffuseR = document.getElementById("diffuseRef").value;
 var specularR = document.getElementById("specularRef").value;
 
+
 function main() {
 //=============================================================================
   // Retrieve the HTML-5 <canvas> element where webGL will draw our pictures:
@@ -304,6 +305,10 @@ function drawAll() {
   specularRef = document.getElementById('specularRef').value; 
 
   shinyness = document.getElementById('shinyness').value;
+
+  lightX = document.getElementById('lightX').value;
+  lightY = document.getElementById('lightY').value;
+  lightZ = document.getElementById('lightZ').value;
 
   // Clear on-screen HTML-5 <canvas> object:
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);

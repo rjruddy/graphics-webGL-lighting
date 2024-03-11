@@ -461,9 +461,9 @@ function VBObox1() {
   uniform float u_Se; // Shinyness exponent
 
   uniform vec3 u_V; // camera "eye" position
+  uniform vec3 u_Light; // light position
 
   attribute vec4 a_Pos1;
-  attribute vec3 a_Color;
   attribute vec3 a_Norm;
   varying vec4 v_Color;
 
@@ -471,37 +471,29 @@ function VBObox1() {
   void main() {
     vec4 transVec = u_NormalMatrix * vec4(a_Norm, 0.0);
     vec3 normVec = normalize(transVec.xyz);
-    vec3 lightVec = vec3(0.0, 0.0, 5.0);
+    // vec3 lightVec = vec3(0.0, 0.0, 5.0);
     gl_Position = u_MvpMatrix * a_Pos1;
 
-    vec3 C = normVec * dot(normVec, lightVec);
+    vec3 C = normVec * dot(normVec, u_Light);
 
     vec4 posnVec = u_MvpMatrix * a_Pos1;
-    vec4 matrixHolder = u_ModelMatrix * vec4(0.0, 0.0, 0.0, 0.0);
     vec3 normEye = normalize(u_V);
-
     vec3 normPosn = normalize(posnVec.xyz);
 
-    vec3 R = reflect(normalize(-(lightVec - normPosn)), normVec); 
-    float nDotL = max(dot(normVec, lightVec), 0.0);
+    vec4 tempVec = u_ModelMatrix * vec4(0.0, 0.0, 0.0, 0.0);
+
+    vec3 R = reflect(normalize(-(u_Light - normPosn)), normVec); 
+    float nDotL = max(dot(normVec, u_Light), 0.0);
     float rDotV = max(dot(R, normEye), 0.0);
-    float dist = distance(lightVec, a_Pos1.xyz);
+    float dist = distance(u_Light, a_Pos1.xyz);
     float att = 1.0 / dist;
-    // float att = 1.0;
+
 
     vec3 ambient = u_Ia*u_Ka;
     vec3 diffuse = u_Id*u_Kd*att*nDotL;
     vec3 specular = u_Is * u_Ks * att * pow(rDotV, u_Se);
 
-    //TESTING VARIABLE - removes errors from "unused" GLSL unforms/attributes.
-    vec3 tColor = a_Color * nDotL * u_Id * u_Ia * u_Kd * u_Ka * specular * posnVec.x * matrixHolder.x;
-     
-    v_Color = vec4(diffuse + ambient + specular, 1.0 + (tColor.z * 0.0));
-
-    //TEST v_Color valuues
-    // v_Color = vec4(normVec + vec3(1.0, 1.0, 1.0) / 2.0, 1.0 + (tColor.z * 0.0)); //this actually makes color! not the right color tho.
-    // v_Color = vec4(1.0, 0.0, 0.0, 1.0);
-    // v_Color = vec4(a_Norm.xyz, 1.0);
+    v_Color = vec4(diffuse + ambient + specular, 1.0 + (0.0*tempVec.x));
    }`;
 
 //========Fragment shader program=======
@@ -547,7 +539,6 @@ function VBObox1() {
                                 // == 4 floats * bytes/float
                                 //# of bytes from START of vbo to the START
                                 // of 1st a_Norm attrib value in vboContents[]
-  this.vboOffset_a_Color = this.vboOffset_a_Norm;
 
 	            //-----------------------GPU memory locations:                                
 	this.vboLoc;									// GPU Location for Vertex Buffer Object, 
@@ -556,7 +547,6 @@ function VBObox1() {
 	                            	// set by compile/link of VERT_SRC and FRAG_SRC.
 								          //------Attribute locations in our shaders:
 	this.a_Pos1Loc;							  // GPU location: shader 'a_Pos1' attribute
-  this.a_ColorLoc;               // GPU location: shader 'a_Color' attribute
 	this.a_NormLoc;							// GPU location: shader 'a_Norm' attribute
 	
 	            //---------------------- Uniform locations &values in our shaders
@@ -572,6 +562,7 @@ function VBObox1() {
   this.u_Se = shinyness;
 
   this.u_V = new Vector3();
+  this.u_Light = new Vector3([0.0, 0.0, 5.0]);
 
 	this.u_ModelMatrixLoc;						// GPU location for u_ModelMat uniform
   this.u_IaLoc;                     // GPU location for Ia uniform
@@ -583,6 +574,7 @@ function VBObox1() {
   this.u_SeLoc;
 
   this.u_VLoc;
+  this.u_LightLoc;
 };
 
 
@@ -652,12 +644,12 @@ VBObox1.prototype.init = function() {
     						'.init() Failed to get GPU location of attribute a_Pos1');
     return -1;	// error exit.
   }
-  this.a_ColorLoc = gl.getAttribLocation(this.shaderLoc, 'a_Color');
-  if(this.a_ColorLoc < 0) {
-    console.log(this.constructor.name + 
-    						'.init() failed to get the GPU location of attribute a_Color');
-    return -1;	// error exit.
-  }
+  // this.a_ColorLoc = gl.getAttribLocation(this.shaderLoc, 'a_Color');
+  // if(this.a_ColorLoc < 0) {
+  //   console.log(this.constructor.name + 
+  //   						'.init() failed to get the GPU location of attribute a_Color');
+  //   return -1;	// error exit.
+  // }
  	this.a_NormLoc = gl.getAttribLocation(this.shaderLoc, 'a_Norm');
   if(this.a_NormLoc < 0) {
     console.log(this.constructor.name + 
@@ -733,6 +725,16 @@ VBObox1.prototype.init = function() {
     						'.init() failed to get GPU location for u_V uniform');
     return;
   }
+  this.u_LightLoc = gl.getUniformLocation(this.shaderLoc, 'u_Light');
+  if (!this.u_LightLoc) { 
+    console.log(this.constructor.name + 
+    						'.init() failed to get GPU location for u_Light uniform');
+    return;
+  }
+
+  this.u_Light.elements[0] = 0.0;
+  this.u_Light.elements[1] = 0.0;
+  this.u_Light.elements[2] = 5.0;
 }
 
 VBObox1.prototype.switchToMe = function () {
@@ -783,21 +785,21 @@ VBObox1.prototype.switchToMe = function () {
 		              // Offset == how many bytes from START of buffer to the first
   								// value we will actually use?  (we start with position).
   //want the color to be determined by the normals -- but what to do with negative normals?
-  gl.vertexAttribPointer(
-    this.a_ColorLoc, 				// choose Vertex Shader attribute to fill with data
-    3, 							// how many values? 1,2,3 or 4. (we're using R,G,B)
-    gl.FLOAT, 			// data type for each value: usually gl.FLOAT
-    false, 					// did we supply fixed-point data AND it needs normalizing?
-    this.vboStride, 		// Stride -- how many bytes used to store each vertex?
-                    // (x,y,z,w, r,g,b, nx,ny,nz) * bytes/value
-    this.vboOffset_a_Color);			// Offset -- how many bytes from START of buffer to the
+  // gl.vertexAttribPointer(
+  //   this.a_ColorLoc, 				// choose Vertex Shader attribute to fill with data
+  //   3, 							// how many values? 1,2,3 or 4. (we're using R,G,B)
+  //   gl.FLOAT, 			// data type for each value: usually gl.FLOAT
+  //   false, 					// did we supply fixed-point data AND it needs normalizing?
+  //   this.vboStride, 		// Stride -- how many bytes used to store each vertex?
+  //                   // (x,y,z,w, r,g,b, nx,ny,nz) * bytes/value
+  //   this.vboOffset_a_Color);			// Offset -- how many bytes from START of buffer to the
                     // value we will actually use?  Need to skip over x,y,z,w
   gl.vertexAttribPointer(this.a_NormLoc, this.vboFcount_a_Norm,
                          gl.FLOAT, false, 
   						           this.vboStride,  this.vboOffset_a_Norm);
   //-- Enable this assignment of the attribute to its' VBO source:
   gl.enableVertexAttribArray(this.a_Pos1Loc);
-  gl.enableVertexAttribArray(this.a_ColorLoc);
+  // gl.enableVertexAttribArray(this.a_ColorLoc);
   gl.enableVertexAttribArray(this.a_NormLoc);
 }
 
@@ -874,6 +876,10 @@ VBObox1.prototype.adjust = function() {
   this.u_V.elements[1] = eye_y;
   this.u_V.elements[2] = eye_z;
 
+  this.u_Light.elements[0] = lightX;
+  this.u_Light.elements[1] = lightY;
+  this.u_Light.elements[2] = lightZ;
+
   // this.ModelMatrix.setRotate(g_angleNow1, 0, 0, 1);	// -spin drawing axes,
 
   //  Transfer new uniforms' values to the GPU:-------------
@@ -900,6 +906,7 @@ VBObox1.prototype.adjust = function() {
   gl.uniform1f(this.u_SeLoc, this.u_Se);
 
   gl.uniform3f(this.u_VLoc, this.u_V.elements[0], this.u_V.elements[1], this.u_V.elements[2]);
+  gl.uniform3f(this.u_LightLoc, this.u_Light.elements[0], this.u_Light.elements[1], this.u_Light.elements[2]);
 }
 
 VBObox1.prototype.draw = function() {
