@@ -494,8 +494,7 @@ function VBObox1() {
 
     float nDotL = max(dot(normVec, L), 0.0);
     float dist = distance(worldLight, worldPos);
-    float attDenom = 0.5 + 0.1*dist + 0.1*pow(dist, 2.0);
-    float att = 1.0 / attDenom;
+    float att = 1.0;
 
     vec3 ambient = u_Ia*u_Ka + (temp.xyz * 0.0);
     vec3 diffuse = u_Id*u_Kd*att*nDotL;
