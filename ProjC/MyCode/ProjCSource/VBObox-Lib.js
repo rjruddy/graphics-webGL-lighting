@@ -1078,8 +1078,6 @@ function VBObox2() {
     float nDotH = max(dot(H, normal), 0.0); 
 
     float dist = distance(eyeDirection, v_Position.xyz);
-    // float attDenom = 0.5 + 0.1*dist + 0.1*pow(dist, 2.0);
-    // float att = 1.0 / attDenom;
     float att = 1.0;
 
     vec3 diffuse = v_Kd * u_DRef * nDotL * att;
@@ -1091,7 +1089,7 @@ function VBObox2() {
       vec3 specular = v_Ks*u_SRef*att*pow(rDotV, u_Se)*sqrt(nDotL);
       gl_FragColor = vec4(diffuse + ambient + specular, 1.0);
     } else {
-      vec3 specular = v_Ks*u_SRef*att*pow(nDotH, u_Se);
+      vec3 specular = v_Ks*u_SRef*att*pow(nDotH, u_Se)*sqrt(nDotL);
       gl_FragColor = vec4(diffuse + ambient + specular, 1.0);
     }
   }`;
