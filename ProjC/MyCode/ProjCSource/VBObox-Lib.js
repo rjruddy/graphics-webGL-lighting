@@ -511,7 +511,7 @@ function VBObox1() {
       vec3 HNum = L + V;
       float HDenom = length(HNum);
       vec3 H = normalize(HNum / HDenom);
-      float hDotN = dot(H, normVec);
+      float hDotN = max(dot(H, normVec), 0.0);
       vec3 specular = u_Is * u_Ks * att * pow(hDotN, u_Se);
       v_Color = vec4(diffuse + ambient + specular, 1.0);
     }
