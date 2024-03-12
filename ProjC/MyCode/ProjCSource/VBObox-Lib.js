@@ -351,7 +351,7 @@ VBObox0.prototype.adjust = function() {
   // this.ModelMat.setRotate(g_angleNow0, 0, 0, 1);	  // rotate drawing axes,
   // this.ModelMat.translate(0.35, 0, 0);							// then translate them.
   // this.ModelMat.setIdentity();
-  this.ModelMat.set(g_projAll).multiply(g_viewAll);
+  // this.ModelMat.set(g_projAll).multiply(g_viewAll);
 
   //  Transfer new uniforms' values to the GPU:-------------
   // Send  new 'ModelMat' values to the GPU's 'u_ModelMat1' uniform: 
@@ -443,7 +443,7 @@ function VBObox1() {
   
 	this.VERT_SRC =	//--------------------- VERTEX SHADER source code 
  `precision highp float;				// req'd in OpenGL ES if we use 'float'
-  //
+  //Uniform matrices:
   uniform mat4 u_ModelMatrix;
   uniform mat4 u_MvpMatrix;
   uniform mat4 u_NormalMatrix;
@@ -459,8 +459,10 @@ function VBObox1() {
   uniform float u_Ks;
   uniform float u_Se; // Shinyness exponent
 
-  uniform float u_isBlinn; //boolean float 0=false, 1=true
+  //Phong vs Blinn-Phong boolean
+  uniform float u_isBlinn; //0=false, 1=true
 
+  //Camera and Eye position
   uniform vec3 u_V; // camera "eye" position
   uniform vec3 u_Light; // light position
 
@@ -470,34 +472,43 @@ function VBObox1() {
 
   //
   void main() {
-    vec4 transVec = u_NormalMatrix * vec4(a_Norm, 0.0);
+    //Getting normal vec in world coordinates.
+    vec4 transVec = u_ModelMatrix * vec4(a_Norm, 0.0); //CHANGED from normal to model
     vec3 normVec = normalize(transVec.xyz);
     gl_Position = u_MvpMatrix * a_Pos1;
-    vec3 normLight = normalize(u_Light);
 
-    vec3 C = normVec * dot(normVec, u_Light);
+    vec4 worldEye = vec4(u_V, 0.0);
+    vec4 worldPos = u_ModelMatrix * a_Pos1;
+    vec4 worldLight = vec4(u_Light, 0.0); // CHANGED
 
-    vec4 posnVec = u_ModelMatrix * a_Pos1;
-    vec3 normEye = normalize(u_V);
-    vec3 normPosn = normalize(posnVec.xyz);
+    vec3 V = normalize(worldEye.xyz - worldPos.xyz);
+    vec4 temp = u_NormalMatrix * vec4(0.0, 0.0, 0.0, 0.0);
 
-    float nDotL = max(dot(normVec, normLight), 0.0);
-    float dist = distance(u_Light, a_Pos1.xyz);
+    // vec3 normEye = normalize(u_V - worldPos.xyz);
+    vec3 normEye = V;
+    vec3 normPosn = normalize(worldPos.xyz);
+    vec3 normLight = normalize(worldLight.xyz);
+
+    vec3 L = normalize(worldLight.xyz - worldPos.xyz);
+    // vec3 L = normalize(normLight - normPosn);
+
+    float nDotL = max(dot(normVec, L), 0.0);
+    float dist = distance(worldLight, worldPos);
     float attDenom = 0.5 + 0.1*dist + 0.1*pow(dist, 2.0);
     float att = 1.0 / attDenom;
 
-    vec3 ambient = u_Ia*u_Ka;
+    vec3 ambient = u_Ia*u_Ka + (temp.xyz * 0.0);
     vec3 diffuse = u_Id*u_Kd*att*nDotL;
 
     if (u_isBlinn == 0.0) {
       //Phong lighting case
-      vec3 R = reflect(normalize(-(u_Light - normPosn)), normVec); 
-      float rDotV = max(dot(R, normEye), 0.0);
+      vec3 R = reflect(-L, normVec); 
+      float rDotV = max(dot(R, V), 0.0);
       vec3 specular = u_Is * u_Ks * att * pow(rDotV, u_Se);
       v_Color = vec4(diffuse + ambient + specular, 1.0);
     }
     else {
-      vec3 HNum = normLight + normEye;
+      vec3 HNum = L + V;
       float HDenom = length(HNum);
       vec3 H = normalize(HNum / HDenom);
       float hDotN = dot(H, normVec);
@@ -843,26 +854,9 @@ VBObox1.prototype.adjust = function() {
         console.log('ERROR! before' + this.constructor.name + 
   						'.adjust() call you needed to call this.switchToMe()!!');
   }
-	// Adjust values for our uniforms,
-  this.ModelMatrix.setIdentity();
-  this.MvpMatrix.setIdentity();
-  this.NormalMatrix.setIdentity();
 
-  //Model Matrix manipulation
-  this.ModelMatrix.rotate(g_angleNow1, 0, 0, 1);
-
-  // pushMatrix(this.ModelMatrix);
-  //   this.ModelMatrix.translate(5, 5, 0.1);
-  //   this.ModelMatrix.rotate(g_angleNow1, 0, 0, 1);
-  // this.ModelMatrix = popMatrix();
-
-  //Set normal matrix as transpost of model:
-  this.NormalMatrix = this.ModelMatrix.transpose();
-
-  //Setting the contents of the MVP matrix using P * V * M
-  this.MvpMatrix.set(g_projAll);
-  this.MvpMatrix.concat(g_viewAll);
-  this.MvpMatrix.concat(this.ModelMatrix);
+  this.updateNormal();
+  this.updateMvp();
 
   //Update color values
   this.u_Ia.elements[0] = ambientR;
@@ -903,9 +897,7 @@ VBObox1.prototype.adjust = function() {
   gl.uniformMatrix4fv(this.u_NormalMatrixLoc,	
                       false, 										
                       this.NormalMatrix.elements);	
-  // console.log("about to transfer u_Ia value to the GPU")
-  // gl.uniform3f(this.u_IaLoc, this.u_Ia.x, this.u_Ia.y, this.u_Ia.z);
-  // console.log("u_Id by x, y, z: ", this.u_Id.elements[0], this.u_Id.elements[1], this.u_Id.elements[2]);
+
   // PASS IN ILLUMINATION COLOR VALUES
   gl.uniform3f(this.u_IdLoc, this.u_Id.elements[0], this.u_Id.elements[1], this.u_Id.elements[2]);
   gl.uniform3f(this.u_IaLoc, this.u_Ia.elements[0], this.u_Ia.elements[1], this.u_Ia.elements[2]);
@@ -929,17 +921,41 @@ VBObox1.prototype.draw = function() {
         console.log('ERROR! before' + this.constructor.name + 
   						'.draw() call you needed to call this.switchToMe()!!');
   }
+  // // Adjust values for our uniforms,
+  this.ModelMatrix.setIdentity();
+  this.NormalMatrix.setIdentity();
+  // this.NormalMatrix = this.ModelMatrix.transpose();
+  this.MvpMatrix.setIdentity();
+  this.updateNormal();
 
+  // //Model Matrix manipulation
   // pushMatrix(this.ModelMatrix);
-  //   this.ModelMatrix.translate(5, 5, 0.1);
   //   this.ModelMatrix.rotate(g_angleNow1, 0, 0, 1);
+  //   gl.drawArrays(gl.TRIANGLES, 0, this.vboVerts);
+  // //   this.updateNormal();
+  // //   this.updateMvp();
   // this.ModelMatrix = popMatrix();
-  
-  // ----------------------------Draw the contents of the currently-bound VBO:
-  // this.ModelMatrix.set(g_projAll).multiply(g_viewAll);
-    // ----------------------------Draw the contents of the currently-bound VBO:
-  gl.drawArrays(gl.TRIANGLES, 0, this.vboVerts);
 
+  this.ModelMatrix.rotate(g_angleNow1, 0, 0, 1);
+  gl.drawArrays(gl.TRIANGLES, 0, this.vboVerts);
+  this.NormalMatrix = this.ModelMatrix.transpose();
+  this.updateNormal();
+  this.updateMvp();
+
+  //Editor's note -- adding the push() and pop() calls halts the sphere rotation. Need to debug.
+
+}
+
+VBObox1.prototype.updateMvp = function() {
+  // this.ModelMatrix.setIdentity();
+  this.MvpMatrix.set(g_projAll);
+  this.MvpMatrix.concat(g_viewAll);
+  this.MvpMatrix.concat(this.ModelMatrix);
+}
+
+VBObox1.prototype.updateNormal = function() {
+  this.NormalMatrix.set(this.ModelMatrix);
+  this.NormalMatrix.transpose();
 }
 
 

@@ -19,8 +19,9 @@
 // that each get assigned a unique integer identifier:
 
 var MATL_DEFAULT = 			"0";
-var MATL_SILVER = 		"1";
+var MATL_SILVER = 			"1";
 var MATL_BLU_PLASTIC = 		"2";
+var MATL_PINK_PLASTIC = 	"3";
 
 /*
 The code below defines a JavaScript material-describing object whose type we 
@@ -118,6 +119,24 @@ function changeMatl(nuMatl) {
 			document.getElementById("ambientRef").value = 1.0;
 
 			document.getElementById("diffuseR").value = 0.0;
+			document.getElementById("diffuseG").value = 0.0;
+			document.getElementById("diffuseB").value = 1.0;
+			document.getElementById("diffuseRef").value = 1.0;
+
+			document.getElementById("specularR").value = 1.0;
+			document.getElementById("specularG").value = 1.0;
+			document.getElementById("specularB").value = 1.0;
+			document.getElementById("specularRef").value = 1.0;
+			document.getElementById("shinyness").value = 20.0;
+
+			break;
+		case MATL_PINK_PLASTIC: // 3
+			document.getElementById("ambientR").value = 0.3;
+			document.getElementById("ambientG").value = 0.0;
+			document.getElementById("ambientB").value = 0.3;
+			document.getElementById("ambientRef").value = 1.0;
+
+			document.getElementById("diffuseR").value = 1.0;
 			document.getElementById("diffuseG").value = 0.0;
 			document.getElementById("diffuseB").value = 1.0;
 			document.getElementById("diffuseRef").value = 1.0;
